@@ -80,6 +80,43 @@ static int cmd_info(char *args)
   return 0;
 }
 
+static int cmd_x(char *args)
+{
+  if (args == NULL)
+  {
+    printf("Usage: x <N> <address>\n");
+    printf("Example: x 10 0x100000  (scan 10 bytes from address 0x100000)\n");
+    return 0;
+  }
+
+  int n;
+  uint32_t addr;
+  if (sscanf(args, "%d %x", &n, &addr) != 2)
+  {
+    printf("Invalid arguments. Usage: x <N> <address>\n");
+    return 0;
+  }
+  if (n <= 0)
+  {
+    printf("N must be positive\n");
+    return 0;
+  }
+  printf("Address        +0     +1     +2     +3     +4     +5     +6     +7\n");
+  printf("==========  ====== ====== ====== ====== ====== ====== ====== ======\n");
+
+  for (int i = 0; i < n; i += 8)
+  {
+    printf("0x%08x  ", addr + i);
+    for (int j = 0; j < 8 && (i + j) < n; j++)
+    {
+      uint8_t byte = paddr_read(addr + i + j, 1);
+      printf("0x%02x  ", byte);
+    }
+    printf("\n");
+  }
+  return 0;
+}
+
 static int cmd_help(char *args);
 
 static struct {
@@ -94,6 +131,7 @@ static struct {
   /* TODO: Add more commands */
   { "si", "Setp N(default 1)", cmd_si },
   { "info", "Print program status", cmd_info },
+  { "x", "Scan memory", cmd_x },
 };
 
 #define NR_CMD (sizeof(cmd_table) / sizeof(cmd_table[0]))
