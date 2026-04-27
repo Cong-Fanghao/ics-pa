@@ -47,6 +47,39 @@ static int cmd_si(char *args)
   return 0;
 }
 
+void isa_reg_display(void);
+
+static int cmd_info(char *args)
+{
+  if (args == NULL)
+  {
+    printf("Usage: info <subcommand>\n");
+    printf("Subcommands:\n");
+    printf("  r - print register values\n");
+    printf("  w - print watchpoints (to be implemented)\n");
+    return 0;
+  }
+  char *subcmd = strtok(args, " ");
+  if (subcmd == NULL)
+  {
+    printf("Please specify a subcommand: r or w\n");
+    return 0;
+  }
+  if (strcmp(subcmd, "r") == 0)
+  {
+    isa_reg_display();
+  }
+  else if (strcmp(subcmd, "w") == 0)
+  {
+    printf("Watchpoint functionality not implemented yet.\n");
+  }
+  else
+  {
+    printf("Unknown subcommand '%s'\n", subcmd);
+  }
+  return 0;
+}
+
 static int cmd_help(char *args);
 
 static struct {
@@ -60,6 +93,7 @@ static struct {
 
   /* TODO: Add more commands */
   { "si", "Setp N(default 1)", cmd_si },
+  { "info", "Print program status", cmd_info },
 };
 
 #define NR_CMD (sizeof(cmd_table) / sizeof(cmd_table[0]))
