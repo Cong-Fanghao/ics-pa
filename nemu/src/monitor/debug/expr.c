@@ -110,13 +110,23 @@ static bool make_token(char *e) {
           case TK_NUM:
           case TK_HEX:
           case TK_REG:
+            tokens[nr_token].type = rules[i].token_type;
+            strncpy(tokens[nr_token].str, substr_start, substr_len);
+            tokens[nr_token].str[substr_len] = '\0';
+            nr_token++;
+            break;
+          case TK_EQ:
+          case TK_NEQ:
+            tokens[nr_token].type = rules[i].token_type;
+            strncpy(tokens[nr_token].str, substr_start, substr_len);
+            tokens[nr_token].str[substr_len] = '\0';
+            nr_token++;
+            break;
           case '+':
           case '-':
           case '*':
           case '/':
           case '%':
-          case TK_EQ:
-          case TK_NEQ:
           case TK_AND:
           case TK_OR:
           case TK_LPAREN:
