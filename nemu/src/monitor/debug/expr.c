@@ -365,10 +365,11 @@ static uint32_t eval(int p, int q, bool *success)
           return -val;
         case TK_POS:
           return val;
-        case TK_DEREF:
-          printf("dereference not implemented yet\n");
-          *success = false;
-          return 0;
+          uint32_t addr = eval(i + 1, q, success);
+          if (!(*success))
+            return 0;
+          uint32_t value = paddr_read(addr, 4);
+          return value;
         }
       }
     }
