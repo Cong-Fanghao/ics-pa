@@ -15,9 +15,7 @@ enum {
   TK_OR,   // |
   TK_NUM,  // Number
   TK_HEX,  // Hex number
-  TK_REG,  // Register
-  TK_LPAREN, // (
-  TK_RPAREN  // )
+  TK_REG  // Register
   /* TODO: Add more token types */
 
 };
@@ -33,7 +31,7 @@ static struct rule {
 
   {" +", TK_NOTYPE},    // spaces
 
-    {"\\*", '*'},           // multiply
+  {"\\*", '*'},           // multiply
   {"/", '/'},             // divide
   {"%", '%'},             // modulo
 
@@ -45,8 +43,8 @@ static struct rule {
   {"&", TK_AND},          // bitwise and
   {"\\|", TK_OR},         // bitwise or
 
-  {"\\(", TK_LPAREN},     // left parenthesis
-  {"\\)", TK_RPAREN},     // right parenthesis
+  {"\\(", '('},     // left parenthesis
+  {"\\)", ')'},     // right parenthesis
   {"0[xX][0-9a-fA-F]+", TK_HEX},  // hex number
   {"[0-9]+", TK_NUM},     // decimal number
   {"\\$[a-zA-Z]+", TK_REG},      // register
@@ -107,21 +105,23 @@ static bool make_token(char *e) {
         switch (rules[i].token_type) {
           case TK_NOTYPE:
             break;
+
           case TK_NUM:
           case TK_HEX:
           case TK_REG:
             tokens[nr_token].type = rules[i].token_type;
+            if (substr_len >= sizeof(tokens[nr_token].str))
+            {
+              printf("Token too long!\n");
+              return false;
+            }
             strncpy(tokens[nr_token].str, substr_start, substr_len);
             tokens[nr_token].str[substr_len] = '\0';
             nr_token++;
             break;
+
           case TK_EQ:
           case TK_NEQ:
-            tokens[nr_token].type = rules[i].token_type;
-            strncpy(tokens[nr_token].str, substr_start, substr_len);
-            tokens[nr_token].str[substr_len] = '\0';
-            nr_token++;
-            break;
           case '+':
           case '-':
           case '*':
@@ -129,8 +129,8 @@ static bool make_token(char *e) {
           case '%':
           case TK_AND:
           case TK_OR:
-          case TK_LPAREN:
-          case TK_RPAREN:
+          case '(':
+          case ')':
             tokens[nr_token].type = rules[i].token_type;
             strncpy(tokens[nr_token].str, substr_start, substr_len);
             tokens[nr_token].str[substr_len] = '\0';
@@ -156,6 +156,12 @@ static bool make_token(char *e) {
 
 static uint32_t eval(int p, int q, bool *success)
 {
+  if (p > q)
+  {
+    *success = false;
+    return 0;
+  }
+
   if (p == q)
   {
     if (tokens[p].type == TK_NUM)
