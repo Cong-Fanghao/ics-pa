@@ -176,7 +176,6 @@ static uint32_t eval(int p, int q, bool *success)
         return cpu.edi;
       if (strcmp(tokens[p].str, "$eip") == 0)
         return cpu.eip;
-      // Add more registers as needed
       printf("unknown register: %s\n", tokens[p].str);
       *success = false;
       return 0;
@@ -193,7 +192,7 @@ static uint32_t eval(int p, int q, bool *success)
 
   int op_pos = -1;
   int paren_level = 0;
-  int precedence = 0;
+  int min_prec = 10;
 
 #define PREC_ADD_SUB 1
 #define PREC_MUL_DIV_MOD 2
@@ -238,9 +237,9 @@ static uint32_t eval(int p, int q, bool *success)
         curr_prec = PREC_OR;
       }
 
-      if (curr_prec > precedence)
+      if (curr_prec != 0 && curr_prec < min_prec)
       {
-        precedence = curr_prec;
+        min_prec = curr_prec;
         op_pos = i;
       }
     }
