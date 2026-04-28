@@ -9,6 +9,7 @@
 
 enum {
   TK_NOTYPE = 256, 
+  TK_NOT,  // !
   TK_EQ,
   TK_NEQ,  // !=
   TK_LE,   // <=
@@ -48,6 +49,7 @@ static struct rule {
   {"==", TK_EQ},         // equal
   {"!=", TK_NEQ},         // not equal
 
+  {"!", TK_NOT},         // not
   {"&", TK_AND},          // bitwise and
   {"\\|", TK_OR},         // bitwise or
 
@@ -128,6 +130,7 @@ static bool make_token(char *e) {
             nr_token++;
             break;
 
+          case TK_NOT:
           case TK_LE:
           case TK_GE:
           case TK_EQ:
@@ -226,6 +229,29 @@ static void convert_unary_ops()
           tokens[i - 1].type == TK_DEREF)
       {
         tokens[i].type = TK_DEREF;
+      }
+    }
+    else if (tokens[i].type == '!')
+    {
+      if (i == 0 ||
+          tokens[i - 1].type == '(' ||
+          tokens[i - 1].type == '+' ||
+          tokens[i - 1].type == '-' ||
+          tokens[i - 1].type == '*' ||
+          tokens[i - 1].type == '/' ||
+          tokens[i - 1].type == '%' ||
+          tokens[i - 1].type == TK_EQ ||
+          tokens[i - 1].type == TK_NEQ ||
+          tokens[i - 1].type == TK_LE ||
+          tokens[i - 1].type == TK_GE ||
+          tokens[i - 1].type == TK_AND ||
+          tokens[i - 1].type == TK_OR ||
+          tokens[i - 1].type == TK_NEG ||
+          tokens[i - 1].type == TK_POS ||
+          tokens[i - 1].type == TK_DEREF ||
+          tokens[i - 1].type == TK_NOT)
+      {
+        tokens[i].type = TK_NOT;
       }
     }
   }
@@ -347,6 +373,10 @@ static uint32_t eval(int p, int q, bool *success)
       {
         curr_prec = PREC_OR;
       }
+      else if (t == TK_NOT)
+      {
+        curr_prec = PREC_UNARY;
+      }
 
       if (curr_prec != 0 && curr_prec <= min_prec)
       {
@@ -361,7 +391,7 @@ static uint32_t eval(int p, int q, bool *success)
     for (int i = p; i <= q; i++)
     {
       int t = tokens[i].type;
-      if (t == TK_NEG || t == TK_POS || t == TK_DEREF)
+      if (t == TK_NEG || t == TK_POS || t == TK_DEREF || t == TK_NOT)
       {
         uint32_t val = eval(i + 1, q, success);
         if (!(*success))
@@ -372,6 +402,8 @@ static uint32_t eval(int p, int q, bool *success)
           return -val;
         case TK_POS:
           return val;
+        case TK_NOT:
+          return (val == 0) ? 1 : 0;
         case TK_DEREF:
           return paddr_read(val, 4);
         }
