@@ -36,13 +36,52 @@ static int cmd_q(char *args) {
   return -1;
 }
 
+static int cmd_expr(char *args)
+{
+  if (args == NULL)
+  {
+    printf("Usage: p <expression>\n");
+    printf("Example: p 1+2 * 3  or  p $eax+4\n");
+    return 0;
+  }
+
+  bool success;
+  uint32_t result = expr(args, &success);
+  if (success)
+  {
+    printf("Result: 0x%08x (%u)\n", result, result);
+  }
+  else
+  {
+    printf("Expression evaluation failed.\n");
+  }
+  return 0;
+}
+
 static int cmd_si(char *args)
 {
   int step = 1;
   if (args != NULL)
   {
-    sscanf(args, "%d", &step);
+    bool success = false;
+    uint32_t step_val = expr(args, &success);
+
+    if (success)
+    {
+      step = (int)step_val;
+      if (step <= 0)
+      {
+        printf("Step count must be positive (got %d)\n", step);
+        return 0;
+      }
+    }
+    else
+    {
+      printf("Failed to evaluate step expression: %s\n", args);
+      return 0;
+    }
   }
+
   cpu_exec(step);
   return 0;
 }
@@ -84,23 +123,40 @@ static int cmd_x(char *args)
 {
   if (args == NULL)
   {
-    printf("Usage: x <N> <address>\n");
+    printf("Usage: x <N> <address expression>\n");
     printf("Example: x 10 0x100000  (scan 10 bytes from address 0x100000)\n");
+    printf("Example: x 10 $eip+0x20  (scan 10 bytes from address $eip+0x20)\n");
+    printf("Example: x 10 ($eax+$ebx)*2  (scan 10 bytes from computed address)\n");
     return 0;
   }
 
-  int n;
-  uint32_t addr;
-  if (sscanf(args, "%d %x", &n, &addr) != 2)
+  int n = 0;
+  char addr_expr[128] = {0};
+
+  int parsed_count = sscanf(args, "%d %127[^\n]", &n, addr_expr);
+
+  if (parsed_count != 2)
   {
-    printf("Invalid arguments. Usage: x <N> <address>\n");
+    printf("Invalid arguments. Usage: x <N> <address expression>\n");
     return 0;
   }
+
   if (n <= 0)
   {
     printf("N must be positive\n");
     return 0;
   }
+
+  bool success = false;
+  uint32_t addr = expr(addr_expr, &success);
+
+  if (!success)
+  {
+    printf("Failed to evaluate address expression: %s\n", addr_expr);
+    return 0;
+  }
+
+  printf("Scanning %d bytes from 0x%08x (expression: %s)\n", n, addr, addr_expr);
   printf("Address        +0     +1     +2     +3     +4     +5     +6     +7\n");
   printf("==========  ====== ====== ====== ====== ====== ====== ====== ======\n");
 
@@ -113,28 +169,6 @@ static int cmd_x(char *args)
       printf("0x%02x  ", byte);
     }
     printf("\n");
-  }
-  return 0;
-}
-
-static int cmd_expr(char *args)
-{
-  if (args == NULL)
-  {
-    printf("Usage: p <expression>\n");
-    printf("Example: p 1+2 * 3  or  p $eax+4\n");
-    return 0;
-  }
-
-  bool success;
-  uint32_t result = expr(args, &success);
-  if (success)
-  {
-    printf("Result: 0x%08x (%u)\n", result, result);
-  }
-  else
-  {
-    printf("Expression evaluation failed.\n");
   }
   return 0;
 }
