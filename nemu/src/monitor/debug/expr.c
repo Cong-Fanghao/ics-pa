@@ -249,6 +249,12 @@ static void convert_unary_ops()
           tokens[i - 1].type == TK_NEG ||
           tokens[i - 1].type == TK_POS ||
           tokens[i - 1].type == TK_DEREF ||
+          tokens[i - 1].type == TK_NUM ||
+          tokens[i - 1].type == TK_HEX ||
+          tokens[i - 1].type == TK_REG ||
+          tokens[i - 1].type == TK_NEG ||
+          tokens[i - 1].type == TK_POS ||
+          tokens[i - 1].type == TK_DEREF ||
           tokens[i - 1].type == TK_NOT)
       {
         tokens[i].type = TK_NOT;
