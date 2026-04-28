@@ -32,15 +32,19 @@ static struct rule {
    */
 
   {" +", TK_NOTYPE},    // spaces
-  {"\\+", '+'},         // plus
-  {"-", '-'},             // minus
-  {"\\*", '*'},           // multiply
+
+    {"\\*", '*'},           // multiply
   {"/", '/'},             // divide
   {"%", '%'},             // modulo
+
+  {"\\+", '+'},         // plus
+  {"-", '-'},             // minus
+
   {"==", TK_EQ},         // equal
   {"!=", TK_NEQ},         // not equal
   {"&", TK_AND},          // bitwise and
   {"\\|", TK_OR},         // bitwise or
+
   {"\\(", TK_LPAREN},     // left parenthesis
   {"\\)", TK_RPAREN},     // right parenthesis
   {"0[xX][0-9a-fA-F]+", TK_HEX},  // hex number
