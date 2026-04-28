@@ -222,8 +222,8 @@ static int cmd_x(char *args)
   printf("  Count expression: %s\n", count_expr);
   printf("  Addr expression:  %s\n", addr_expr);
   printf("\n");
-  printf("Address      +0   +1   +2   +3   +4   +5   +6   +7\n");
-  printf("==========  ==== ==== ==== ==== ==== ==== ==== ====\n");
+  printf("Address       +0    +1    +2    +3    +4    +5    +6    +7\n");
+  printf("==========   ====  ====  ====  ====  ====  ====  ====  ====\n");
 
   *count_expr_end = ' ';
 
