@@ -15,7 +15,10 @@ enum {
   TK_OR,   // |
   TK_NUM,  // Number
   TK_HEX,  // Hex number
-  TK_REG  // Register
+  TK_REG,  // Register
+  TK_NEG,   // 单目负号
+  TK_POS,   // 单目正号
+  TK_DEREF  // 解引用 *
   /* TODO: Add more token types */
 
 };
@@ -154,6 +157,73 @@ static bool make_token(char *e) {
   return true;
 }
 
+static void convert_unary_ops()
+{
+  for (int i = 0; i < nr_token; i++)
+  {
+    if (tokens[i].type == '-')
+    {
+      if (i == 0 ||
+          tokens[i - 1].type == '(' ||
+          tokens[i - 1].type == '+' ||
+          tokens[i - 1].type == '-' ||
+          tokens[i - 1].type == '*' ||
+          tokens[i - 1].type == '/' ||
+          tokens[i - 1].type == '%' ||
+          tokens[i - 1].type == TK_EQ ||
+          tokens[i - 1].type == TK_NEQ ||
+          tokens[i - 1].type == TK_AND ||
+          tokens[i - 1].type == TK_OR ||
+          tokens[i - 1].type == TK_NEG ||
+          tokens[i - 1].type == TK_POS ||
+          tokens[i - 1].type == TK_DEREF)
+      {
+        tokens[i].type = TK_NEG;
+      }
+    }
+    else if (tokens[i].type == '+')
+    {
+      if (i == 0 ||
+          tokens[i - 1].type == '(' ||
+          tokens[i - 1].type == '+' ||
+          tokens[i - 1].type == '-' ||
+          tokens[i - 1].type == '*' ||
+          tokens[i - 1].type == '/' ||
+          tokens[i - 1].type == '%' ||
+          tokens[i - 1].type == TK_EQ ||
+          tokens[i - 1].type == TK_NEQ ||
+          tokens[i - 1].type == TK_AND ||
+          tokens[i - 1].type == TK_OR ||
+          tokens[i - 1].type == TK_NEG ||
+          tokens[i - 1].type == TK_POS ||
+          tokens[i - 1].type == TK_DEREF)
+      {
+        tokens[i].type = TK_POS;
+      }
+    }
+    else if (tokens[i].type == '*')
+    {
+      if (i == 0 ||
+          tokens[i - 1].type == '(' ||
+          tokens[i - 1].type == '+' ||
+          tokens[i - 1].type == '-' ||
+          tokens[i - 1].type == '*' ||
+          tokens[i - 1].type == '/' ||
+          tokens[i - 1].type == '%' ||
+          tokens[i - 1].type == TK_EQ ||
+          tokens[i - 1].type == TK_NEQ ||
+          tokens[i - 1].type == TK_AND ||
+          tokens[i - 1].type == TK_OR ||
+          tokens[i - 1].type == TK_NEG ||
+          tokens[i - 1].type == TK_POS ||
+          tokens[i - 1].type == TK_DEREF)
+      {
+        tokens[i].type = TK_DEREF;
+      }
+    }
+  }
+}
+
 static uint32_t eval(int p, int q, bool *success)
 {
   if (p > q)
@@ -203,7 +273,24 @@ static uint32_t eval(int p, int q, bool *success)
 
   if (tokens[p].type == '(' && tokens[q].type == ')')
   {
-    return eval(p + 1, q - 1, success);
+    int level = 0;
+    bool whole_wrapped = true;
+    for (int i = p; i <= q; i++)
+    {
+      if (tokens[i].type == '(')
+        level++;
+      else if (tokens[i].type == ')')
+        level--;
+      if (level == 0 && i < q)
+      {
+        whole_wrapped = false;
+        break;
+      }
+    }
+    if (whole_wrapped)
+    {
+      return eval(p + 1, q - 1, success);
+    }
   }
 
   int op_pos = -1;
@@ -215,16 +302,17 @@ static uint32_t eval(int p, int q, bool *success)
 #define PREC_EQ 3
 #define PREC_AND 4
 #define PREC_OR 5
+#define PREC_UNARY 6
 
-  for (int i = p; i <= q; i++)
+  for (int i = q; i >= p; i--)
   {
     int t = tokens[i].type;
 
-    if (t == '(')
+    if (t == ')')
     {
       paren_level++;
     }
-    else if (t == ')')
+    else if (t == '(')
     {
       paren_level--;
     }
@@ -263,13 +351,28 @@ static uint32_t eval(int p, int q, bool *success)
 
   if (op_pos == -1)
   {
-    if (tokens[p].type == '+' || tokens[p].type == '-')
+    for (int i = p; i <= q; i++)
     {
-      uint32_t val = eval(p + 1, q, success);
-      if (!(*success))
-        return 0;
-      return (tokens[p].type == '+') ? val : -val;
+      int t = tokens[i].type;
+      if (t == TK_NEG || t == TK_POS || t == TK_DEREF)
+      {
+        uint32_t val = eval(i + 1, q, success);
+        if (!(*success))
+          return 0;
+        switch (t)
+        {
+        case TK_NEG:
+          return -val;
+        case TK_POS:
+          return val;
+        case TK_DEREF:
+          printf("dereference not implemented yet\n");
+          *success = false;
+          return 0;
+        }
+      }
     }
+
     printf("no dominant operator found\n");
     *success = false;
     return 0;
@@ -328,6 +431,7 @@ uint32_t expr(char *e, bool *success) {
   }
 
   /* TODO: Insert codes to evaluate the expression. */
+  convert_unary_ops();
   *success = true;
   return eval(0, nr_token - 1, success);
 }
