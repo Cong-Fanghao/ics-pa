@@ -11,6 +11,8 @@ enum {
   TK_NOTYPE = 256, 
   TK_EQ,
   TK_NEQ,  // !=
+  TK_LE,   // <=
+  TK_GE,   // >=
   TK_AND,  // &
   TK_OR,   // |
   TK_NUM,  // Number
@@ -41,8 +43,11 @@ static struct rule {
   {"\\+", '+'},         // plus
   {"-", '-'},             // minus
 
+  {"<=", TK_LE},        // less or equal
+  {">=", TK_GE},        // greater or equal
   {"==", TK_EQ},         // equal
   {"!=", TK_NEQ},         // not equal
+
   {"&", TK_AND},          // bitwise and
   {"\\|", TK_OR},         // bitwise or
 
@@ -123,6 +128,8 @@ static bool make_token(char *e) {
             nr_token++;
             break;
 
+          case TK_LE:
+          case TK_GE:
           case TK_EQ:
           case TK_NEQ:
           case '+':
@@ -328,7 +335,7 @@ static uint32_t eval(int p, int q, bool *success)
       {
         curr_prec = PREC_MUL_DIV_MOD;
       }
-      else if (t == TK_EQ || t == TK_NEQ)
+      else if (t == TK_EQ || t == TK_NEQ || t == TK_LE || t == TK_GE)
       {
         curr_prec = PREC_EQ;
       }
@@ -411,6 +418,10 @@ static uint32_t eval(int p, int q, bool *success)
     return left == right;
   case TK_NEQ:
     return left != right;
+  case TK_LE:
+    return left <= right;
+  case TK_GE:
+    return left >= right;
   case TK_AND:
     return left & right;
   case TK_OR:
