@@ -117,6 +117,28 @@ static int cmd_x(char *args)
   return 0;
 }
 
+static int cmd_expr(char *args)
+{
+  if (args == NULL)
+  {
+    printf("Usage: p <expression>\n");
+    printf("Example: p 1+2 * 3  or  p $eax+4\n");
+    return 0;
+  }
+
+  bool success;
+  uint32_t result = expr(args, &success);
+  if (success)
+  {
+    printf("Result: 0x%08x (%u)\n", result, result);
+  }
+  else
+  {
+    printf("Expression evaluation failed.\n");
+  }
+  return 0;
+}
+
 static int cmd_help(char *args);
 
 static struct {
@@ -132,6 +154,7 @@ static struct {
   { "si", "Setp N(default 1)", cmd_si },
   { "info", "Print program status", cmd_info },
   { "x", "Scan memory", cmd_x },
+  { "p", "Evaluate the expression", cmd_expr },
 };
 
 #define NR_CMD (sizeof(cmd_table) / sizeof(cmd_table[0]))
