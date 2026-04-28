@@ -123,47 +123,68 @@ static int cmd_x(char *args)
 {
   if (args == NULL)
   {
-    printf("Usage: x <N> <address expression>\n");
-    printf("Example: x 10 0x100000  (scan 10 bytes from address 0x100000)\n");
-    printf("Example: x 10 $eip+0x20  (scan 10 bytes from address $eip+0x20)\n");
-    printf("Example: x 10 ($eax+$ebx)*2  (scan 10 bytes from computed address)\n");
+    printf("Usage: x <count_expression> <address_expression>\n");
+    printf("Both parameters support full expression evaluation.\n");
+    printf("Examples:\n");
+    printf("  x 10 0x100000          # 查看固定地址\n");
+    printf("  x 2 * 4 $eip             # 查看8字节，从eip开始\n");
+    printf("  x $eax $esp+($ebx*2)  # 数量由eax决定，地址动态计算\n");
     return 0;
   }
 
-  int n = 0;
-  char addr_expr[128] = {0};
-
-  int parsed_count = sscanf(args, "%d %127[^\n]", &n, addr_expr);
-
-  if (parsed_count != 2)
+  char *count_expr_end = args;
+  while (*count_expr_end != '\0' && *count_expr_end != ' ')
   {
-    printf("Invalid arguments. Usage: x <N> <address expression>\n");
+    count_expr_end++;
+  }
+
+  if (*count_expr_end == '\0')
+  {
+    printf("Missing address expression. Usage: x <count> <address>\n");
     return 0;
   }
 
-  if (n <= 0)
-  {
-    printf("N must be positive\n");
-    return 0;
-  }
+  *count_expr_end = '\0';
+  char *count_expr = args;
+  char *addr_expr = count_expr_end + 1;
 
   bool success = false;
-  uint32_t addr = expr(addr_expr, &success);
+  uint32_t count = expr(count_expr, &success);
+  if (!success)
+  {
+    printf("Failed to evaluate count expression: %s\n", count_expr);
+    *count_expr_end = ' ';
+    return 0;
+  }
 
+  if (count <= 0 || count > 1024)
+  {
+    printf("Count must be between 1 and 1024 (got %u)\n", count);
+    *count_expr_end = ' ';
+    return 0;
+  }
+
+  uint32_t addr = expr(addr_expr, &success);
   if (!success)
   {
     printf("Failed to evaluate address expression: %s\n", addr_expr);
+    *count_expr_end = ' ';
     return 0;
   }
 
-  printf("Scanning %d bytes from 0x%08x (expression: %s)\n", n, addr, addr_expr);
+  *count_expr_end = ' ';
+
+  printf("Scanning %u bytes from 0x%08x\n", count, addr);
+  printf("  Count expression: %s\n", count_expr);
+  printf("  Addr expression:  %s\n", addr_expr);
+  printf("\n");
   printf("Address        +0     +1     +2     +3     +4     +5     +6     +7\n");
   printf("==========  ====== ====== ====== ====== ====== ====== ====== ======\n");
 
-  for (int i = 0; i < n; i += 8)
+  for (uint32_t i = 0; i < count; i += 8)
   {
     printf("0x%08x  ", addr + i);
-    for (int j = 0; j < 8 && (i + j) < n; j++)
+    for (int j = 0; j < 8 && (i + j) < count; j++)
     {
       uint8_t byte = paddr_read(addr + i + j, 1);
       printf("0x%02x  ", byte);
