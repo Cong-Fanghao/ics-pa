@@ -167,95 +167,54 @@ static bool make_token(char *e) {
   return true;
 }
 
+static bool is_prev_unary_context(int prev_type)
+{
+  return prev_type == '(' ||
+         prev_type == '+' ||
+         prev_type == '-' ||
+         prev_type == '*' ||
+         prev_type == '/' ||
+         prev_type == '%' ||
+         prev_type == TK_EQ ||
+         prev_type == TK_NEQ ||
+         prev_type == TK_LE ||
+         prev_type == TK_GE ||
+         prev_type == TK_AND ||
+         prev_type == TK_OR ||
+         prev_type == TK_NOT ||
+         prev_type == TK_NEG ||
+         prev_type == TK_POS ||
+         prev_type == TK_DEREF;
+}
+
 static void convert_unary_ops()
 {
   for (int i = 0; i < nr_token; i++)
   {
     if (tokens[i].type == '-')
     {
-      if (i == 0 ||
-          tokens[i - 1].type == '(' ||
-          tokens[i - 1].type == '+' ||
-          tokens[i - 1].type == '-' ||
-          tokens[i - 1].type == '*' ||
-          tokens[i - 1].type == '/' ||
-          tokens[i - 1].type == '%' ||
-          tokens[i - 1].type == TK_EQ ||
-          tokens[i - 1].type == TK_NEQ ||
-          tokens[i - 1].type == TK_AND ||
-          tokens[i - 1].type == TK_OR ||
-          tokens[i - 1].type == TK_NEG ||
-          tokens[i - 1].type == TK_POS ||
-          tokens[i - 1].type == TK_DEREF)
+      if (i == 0 || is_prev_unary_context(tokens[i - 1].type))
       {
         tokens[i].type = TK_NEG;
       }
     }
     else if (tokens[i].type == '+')
     {
-      if (i == 0 ||
-          tokens[i - 1].type == '(' ||
-          tokens[i - 1].type == '+' ||
-          tokens[i - 1].type == '-' ||
-          tokens[i - 1].type == '*' ||
-          tokens[i - 1].type == '/' ||
-          tokens[i - 1].type == '%' ||
-          tokens[i - 1].type == TK_EQ ||
-          tokens[i - 1].type == TK_NEQ ||
-          tokens[i - 1].type == TK_AND ||
-          tokens[i - 1].type == TK_OR ||
-          tokens[i - 1].type == TK_NEG ||
-          tokens[i - 1].type == TK_POS ||
-          tokens[i - 1].type == TK_DEREF)
+      if (i == 0 || is_prev_unary_context(tokens[i - 1].type))
       {
         tokens[i].type = TK_POS;
       }
     }
     else if (tokens[i].type == '*')
     {
-      if (i == 0 ||
-          tokens[i - 1].type == '(' ||
-          tokens[i - 1].type == '+' ||
-          tokens[i - 1].type == '-' ||
-          tokens[i - 1].type == '*' ||
-          tokens[i - 1].type == '/' ||
-          tokens[i - 1].type == '%' ||
-          tokens[i - 1].type == TK_EQ ||
-          tokens[i - 1].type == TK_NEQ ||
-          tokens[i - 1].type == TK_AND ||
-          tokens[i - 1].type == TK_OR ||
-          tokens[i - 1].type == TK_NEG ||
-          tokens[i - 1].type == TK_POS ||
-          tokens[i - 1].type == TK_DEREF)
+      if (i == 0 || is_prev_unary_context(tokens[i - 1].type))
       {
         tokens[i].type = TK_DEREF;
       }
     }
     else if (tokens[i].type == '!')
     {
-      if (i == 0 ||
-          tokens[i - 1].type == '(' ||
-          tokens[i - 1].type == '+' ||
-          tokens[i - 1].type == '-' ||
-          tokens[i - 1].type == '*' ||
-          tokens[i - 1].type == '/' ||
-          tokens[i - 1].type == '%' ||
-          tokens[i - 1].type == TK_EQ ||
-          tokens[i - 1].type == TK_NEQ ||
-          tokens[i - 1].type == TK_LE ||
-          tokens[i - 1].type == TK_GE ||
-          tokens[i - 1].type == TK_AND ||
-          tokens[i - 1].type == TK_OR ||
-          tokens[i - 1].type == TK_NEG ||
-          tokens[i - 1].type == TK_POS ||
-          tokens[i - 1].type == TK_DEREF ||
-          tokens[i - 1].type == TK_NUM ||
-          tokens[i - 1].type == TK_HEX ||
-          tokens[i - 1].type == TK_REG ||
-          tokens[i - 1].type == TK_NEG ||
-          tokens[i - 1].type == TK_POS ||
-          tokens[i - 1].type == TK_DEREF ||
-          tokens[i - 1].type == TK_NOT)
+      if (i == 0 || is_prev_unary_context(tokens[i - 1].type))
       {
         tokens[i].type = TK_NOT;
       }
@@ -378,10 +337,6 @@ static uint32_t eval(int p, int q, bool *success)
       else if (t == TK_OR)
       {
         curr_prec = PREC_OR;
-      }
-      else if (t == TK_NOT)
-      {
-        curr_prec = PREC_UNARY;
       }
 
       if (curr_prec != 0 && curr_prec <= min_prec)
