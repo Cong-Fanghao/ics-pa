@@ -49,7 +49,7 @@ static int cmd_expr(char *args)
   uint32_t result = expr(args, &success);
   if (success)
   {
-    printf("Result: 0x%08x (%u)\n", result, result);
+    printf("Result: 0x%08x (%d)\n", result, (int32_t)result);
   }
   else
   {
