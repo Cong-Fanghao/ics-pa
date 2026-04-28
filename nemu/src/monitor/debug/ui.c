@@ -88,6 +88,52 @@ static int cmd_si(char *args)
 
 void isa_reg_display(void);
 
+static int cmd_w(char *args)
+{
+  if (args == NULL)
+  {
+    printf("Usage: w <expression>\n");
+    printf("Set a watchpoint for an expression.\n");
+    return 0;
+  }
+
+  bool success;
+  uint32_t val = expr(args, &success);
+  if (!success)
+  {
+    printf("Invalid expression: %s\n", args);
+    return 0;
+  }
+
+  WP *wp = new_wp();
+  if (wp == NULL)
+  {
+    printf("Failed to create watchpoint: no free watchpoint available.\n");
+    return 0;
+  }
+
+  strncpy(wp->expr, args, sizeof(wp->expr) - 1);
+  wp->expr[sizeof(wp->expr) - 1] = '\0';
+  wp->old_val = val;
+
+  printf("Watchpoint %d: %s\n", wp->NO, wp->expr);
+  return 0;
+}
+
+static int cmd_d(char *args)
+{
+  if (args == NULL)
+  {
+    printf("Usage: d <watchpoint_number>\n");
+    printf("Delete a watchpoint.\n");
+    return 0;
+  }
+
+  int no = atoi(args);
+  delete_watchpoint(no);
+  return 0;
+}
+
 static int cmd_info(char *args)
 {
   if (args == NULL)
@@ -110,7 +156,7 @@ static int cmd_info(char *args)
   }
   else if (strcmp(subcmd, "w") == 0)
   {
-    printf("Watchpoint functionality not implemented yet.\n");
+    print_watchpoints();
   }
   else
   {
@@ -210,6 +256,8 @@ static struct {
   { "info", "Print program status", cmd_info },
   { "x", "Scan memory", cmd_x },
   { "p", "Evaluate the expression", cmd_expr },
+  { "w", "Set a watchpoint", cmd_w },
+  { "d", "Delete a watchpoint", cmd_d },
 };
 
 #define NR_CMD (sizeof(cmd_table) / sizeof(cmd_table[0]))
