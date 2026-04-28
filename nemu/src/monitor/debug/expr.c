@@ -253,7 +253,7 @@ static uint32_t eval(int p, int q, bool *success)
         curr_prec = PREC_OR;
       }
 
-      if (curr_prec != 0 && curr_prec < min_prec)
+      if (curr_prec != 0 && curr_prec <= min_prec)
       {
         min_prec = curr_prec;
         op_pos = i;
