@@ -126,60 +126,83 @@ static int cmd_x(char *args)
     printf("Usage: x <count_expression> <address_expression>\n");
     printf("Both parameters support full expression evaluation.\n");
     printf("Examples:\n");
-    printf("  x 10 0x100000          # 查看固定地址\n");
-    printf("  x 2 * 4 $eip             # 查看8字节，从eip开始\n");
-    printf("  x $eax $esp+($ebx*2)  # 数量由eax决定，地址动态计算\n");
+    printf("  x 10 0x100000          # View fixed address\n");
+    printf("  x 2 * 4 $eip             # View 8 bytes from eip\n");
+    printf("  x $eax $esp+($ebx*2)  # Count determined by eax, address computed dynamically\n");
     return 0;
   }
 
-  char *count_expr_end = args;
-  while (*count_expr_end != '\0' && *count_expr_end != ' ')
+  char *find_split_position(char *str)
   {
-    count_expr_end++;
+    int paren_depth = 0;
+    for (char *p = str; *p != '\0'; p++)
+    {
+      if (*p == '(')
+      {
+        paren_depth++;
+      }
+      else if (*p == ')')
+      {
+        paren_depth--;
+        if (paren_depth < 0)
+        {
+          return NULL;
+        }
+      }
+      else if (*p == ' ' && paren_depth == 0)
+      {
+        return p;
+      }
+    }
+    return NULL;
   }
 
-  if (*count_expr_end == '\0')
+  char *split_pos = find_split_position(args);
+  if (split_pos == NULL)
   {
-    printf("Missing address expression. Usage: x <count> <address>\n");
+    printf("Missing or invalid address expression. Usage: x <count_expr> <addr_expr>\n");
     return 0;
   }
 
-  *count_expr_end = '\0';
-  char *count_expr = args;
-  char *addr_expr = count_expr_end + 1;
+  *split_pos = '\0';
+  char *count_expr_raw = args;
+  char *addr_expr_raw = split_pos + 1;
+  while (*addr_expr_raw == ' ')
+  {
+    addr_expr_raw++;
+  }
 
   bool success = false;
-  uint32_t count = expr(count_expr, &success);
+  uint32_t count = expr(count_expr_raw, &success);
   if (!success)
   {
-    printf("Failed to evaluate count expression: %s\n", count_expr);
-    *count_expr_end = ' ';
+    printf("Failed to evaluate count expression: %s\n", count_expr_raw);
+    *split_pos = ' ';
     return 0;
   }
-
   if (count <= 0 || count > 1024)
   {
     printf("Count must be between 1 and 1024 (got %u)\n", count);
-    *count_expr_end = ' ';
+    *split_pos = ' ';
     return 0;
   }
 
-  uint32_t addr = expr(addr_expr, &success);
+  uint32_t addr = expr(addr_expr_raw, &success);
   if (!success)
   {
-    printf("Failed to evaluate address expression: %s\n", addr_expr);
-    *count_expr_end = ' ';
+    printf("Failed to evaluate address expression: %s\n", addr_expr_raw);
+    *split_pos = ' ';
     return 0;
   }
 
-  *count_expr_end = ' ';
+  *split_pos = ' ';
 
   printf("Scanning %u bytes from 0x%08x\n", count, addr);
-  printf("  Count expression: %s\n", count_expr);
-  printf("  Addr expression:  %s\n", addr_expr);
+  printf("  Count expression: %s\n", count_expr_raw);
+  printf("  Addr expression:  %s\n", addr_expr_raw);
   printf("\n");
-  printf("Address        +0     +1     +2     +3     +4     +5     +6     +7\n");
-  printf("==========  ====== ====== ====== ====== ====== ====== ====== ======\n");
+  printf("Address      +0    +1    +2    +3    +4    +5    +6    +7\n");
+  printf("=========  ===== ===== ===== ===== ===== ===== ===== =====\n");
 
   for (uint32_t i = 0; i < count; i += 8)
   {
