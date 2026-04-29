@@ -48,6 +48,8 @@ static inline make_DopHelper(SI) {
     op->simm = (int32_t)instr_fetch(eip, 4);
   }
 
+  printf("decode_op_SI: simm=0x%x, eip after=0x%x\n", op->simm, *eip);
+
   rtl_li(&op->val, op->simm);
 
 #ifdef DEBUG
