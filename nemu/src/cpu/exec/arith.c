@@ -9,20 +9,20 @@ make_EHelper(add) {
 make_EHelper(sub) {
   // TODO();
   rtl_sub(&t2, &id_dest->val, &id_src->val);
-
   operand_write(id_dest, &t2);
 
   rtl_update_ZFSF(&t2, id_dest->width);
-
+  // 被减数小于减数需进位，CF置1
   rtl_sltu(&t0, &id_dest->val, &id_src->val);
   rtl_set_CF(&t0);
-
-  rtl_xor(&t0, &id_dest->val, &id_src->val);
-  rtl_xor(&t1, &id_dest->val, &t2);
+  // 判断溢出
+  // 符号位：被减数!=减数 && 被减数 != 差 -> OF置1
+  rtl_xor(&t0, &id_dest->val, &id_src->val); // 被减数!=减数->t0 = 1
+  rtl_xor(&t1, &id_dest->val, &t2);          // 被减数 != 差 -> t1 = 1;
   rtl_and(&t0, &t0, &t1);
   rtl_msb(&t0, &t0, id_dest->width);
   rtl_set_OF(&t0);
-  
+
   print_asm_template2(sub);
 }
 
