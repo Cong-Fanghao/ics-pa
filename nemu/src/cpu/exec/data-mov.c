@@ -31,17 +31,22 @@ make_EHelper(popa) {
 }
 
 make_EHelper(leave) {
-  TODO();
+  // TODO();
+  rtl_mv(&cpu.esp, &cpu.ebp);
+  rtl_pop(&cpu.ebp);
 
   print_asm("leave");
 }
 
 make_EHelper(cltd) {
   if (decoding.is_operand_size_16) {
-    TODO();
+    // TODO();
+    rtl_sext(&cpu.edx, &cpu.eax, 2);
   }
   else {
-    TODO();
+    // TODO();
+    rtl_msb(&t0, &cpu.eax, 4);
+    rtl_sub(&cpu.edx, &tzero, &t0);
   }
 
   print_asm(decoding.is_operand_size_16 ? "cwtl" : "cltd");
