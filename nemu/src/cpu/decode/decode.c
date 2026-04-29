@@ -42,12 +42,10 @@ static inline make_DopHelper(SI) {
   if (op->width == 1)
   {
     op->simm = (int8_t)instr_fetch(eip, 1);
-    printf("decode_op_SI (1-byte): simm=0x%x, eip after fetch: 0x%x\n", op->simm, *eip);
   }
   else
   {
     op->simm = (int32_t)instr_fetch(eip, 4);
-    printf("decode_op_SI (4-byte): simm=0x%x, eip after fetch: 0x%x\n", op->simm, *eip);
   }
 
   rtl_li(&op->val, op->simm);
