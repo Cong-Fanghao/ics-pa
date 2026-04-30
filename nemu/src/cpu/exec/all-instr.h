@@ -54,3 +54,6 @@ make_EHelper(cwtl);
 
 make_EHelper(movsx);
 make_EHelper(movzx);
+
+make_EHelper(in);
+make_EHelper(out);
