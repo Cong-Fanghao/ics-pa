@@ -217,14 +217,4 @@ static inline void rtl_update_ZFSF(const rtlreg_t* result, int width) {
   rtl_update_SF(result, width);
 }
 
-static inline void rtl_rol(rtlreg_t *dest, const rtlreg_t *src1, const rtlreg_t *src2, int width)
-{
-  uint32_t src2eff = *src2 % (width * 8);
-  uint32_t temp = 0xffffffff >> (32 - width * 8);
-  uint32_t partlow = ((*src1 & (temp >> src2eff)) << src2eff);
-  temp = temp >> (width * 8 - src2eff) << (width * 8 - src2eff);
-  uint32_t parthigh = ((*src1 & temp) >> (width * 8 - src2eff));
-  *dest = partlow | parthigh;
-}
-
 #endif
