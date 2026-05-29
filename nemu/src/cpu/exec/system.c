@@ -2,6 +2,7 @@
 
 void diff_test_skip_qemu();
 void diff_test_skip_nemu();
+void raise_intr(uint8_t NO, vaddr_t ret_addr);
 
 make_EHelper(lidt) {
   // TODO();
@@ -44,10 +45,10 @@ make_EHelper(int) {
 
 make_EHelper(iret) {
   // TODO();
-  uint32_t eip, cs, eflags;
+  uint32_t ret_eip, cs, eflags;
 
   // 弹出 EIP、CS、EFLAGS
-  eip = vaddr_read(cpu.esp, 4);
+  ret_eip = vaddr_read(cpu.esp, 4);
   cpu.esp += 4;
   cs = vaddr_read(cpu.esp, 4);
   cpu.esp += 4;
@@ -55,7 +56,7 @@ make_EHelper(iret) {
   cpu.esp += 4;
 
   // 恢复寄存器
-  cpu.eip = eip;
+  cpu.eip = ret_eip;
   cpu.cs = cs;
   cpu.eflags.val = eflags;
 
