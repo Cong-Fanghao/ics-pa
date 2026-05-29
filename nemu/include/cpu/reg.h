@@ -45,7 +45,6 @@ typedef struct {
   };
 
   vaddr_t eip;
-  rtlreg_t esp;
 
   union
   {
@@ -107,5 +106,7 @@ static inline const char* reg_name(int index, int width) {
     default: assert(0);
   }
 }
+
+#define FL_IF 0x200
 
 #endif
