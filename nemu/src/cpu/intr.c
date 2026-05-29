@@ -2,28 +2,28 @@
 #include "memory/mmu.h"
 
 void raise_intr(uint8_t NO, vaddr_t ret_addr) {
-  /* TODO: Trigger an interrupt/exception with ``NO''.
-   * That is, use ``NO'' to index the IDT.
-   */
-  assert(NO * 8 + 7 <= cpu.idtr.limit);
+  cpu.eflags.val &= ~FL_IF;
 
-  vaddr_t gate_addr = cpu.idtr.base + NO * 8;
-  uint32_t gate_lo = vaddr_read(gate_addr, 4);
-  uint32_t gate_hi = vaddr_read(gate_addr + 4, 4);
-  vaddr_t intr_addr = (gate_lo & 0xffff) | (gate_hi & 0xffff0000);
+  /* 压栈 EFLAGS, CS, EIP */
+  cpu.esp -= 4;  vaddr_write(cpu.esp, 4, cpu.eflags.val);
+  cpu.esp -= 4;  vaddr_write(cpu.esp, 4, cpu.cs);
+  cpu.esp -= 4;  vaddr_write(cpu.esp, 4, ret_addr);
 
-  rtl_push(&cpu.eflags, 4);
-  rtlreg_t cs = cpu.cs;
-  rtl_push(&cs, 4);
-  rtl_push(&ret_addr, 4);
+  /* 从 IDT 取中断门 */
+  uint32_t entry = cpu.idtr.base + NO * 8;
 
+  uint32_t low  = vaddr_read(entry,     4);
+  uint32_t high = vaddr_read(entry + 4, 4);
+
+  uint16_t off_low  = low  & 0xffff;  // ✓
+  uint16_t sel      = low  >> 16;      // ✓
+  uint16_t off_high = high >> 16;      // ✅ 修正：是 >>16 不是 &0xffff
+
+  cpu.cs = sel;
   decoding.is_jmp = 1;
-  decoding.jmp_eip = intr_addr;
+  decoding.jmp_eip = ((uint32_t)off_high << 16) | off_low;
 }
 
 void dev_raise_intr() {
-  const uint8_t IRQ_TIMER = 32;
-  if (cpu.Eflags.IF) {
-    raise_intr(IRQ_TIMER, cpu.eip);
-  }
+  raise_intr(0x20, cpu.eip);
 }
