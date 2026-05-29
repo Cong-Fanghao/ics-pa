@@ -3,14 +3,16 @@
 void diff_test_skip_qemu();
 void diff_test_skip_nemu();
 
+extern void raise_intr(uint8_t NO,vaddr_t ret_addr);
+
 make_EHelper(lidt) {
   // TODO();
-  t1=id_dest->val;//address of data array
-  rtl_lm(&t0,&t1,2);//t0 = data[0], the limit length of IDT
+  t1=id_dest->val;
+  rtl_lm(&t0,&t1,2);
   cpu.idtr.limit=t0;
 
   t1=id_dest->val+2;
-  rtl_lm(&t0,&t1,4);//t0 = base address of IDT, 32bit
+  rtl_lm(&t0,&t1,4);
   cpu.idtr.base=t0;
 
   print_asm_template1(lidt);
@@ -33,7 +35,9 @@ make_EHelper(mov_cr2r) {
 }
 
 make_EHelper(int) {
-  TODO();
+  // TODO();
+  uint8_t NO=id_dest->val&0xff;
+  raise_intr(NO,decoding.seq_eip);
 
   print_asm("int %s", id_dest->str);
 
