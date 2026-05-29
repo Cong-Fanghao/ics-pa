@@ -72,14 +72,6 @@ typedef struct {
     uint32_t val;
   } eflags;
 
-  struct IDTR
-  {
-    uint32_t base;
-    uint16_t limit;
-  } idtr;
-
-  uint16_t cs;
-
 } CPU_state;
 
 extern CPU_state cpu;
@@ -106,7 +98,5 @@ static inline const char* reg_name(int index, int width) {
     default: assert(0);
   }
 }
-
-#define FL_IF 0x200
 
 #endif

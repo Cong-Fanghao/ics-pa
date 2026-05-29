@@ -2,12 +2,9 @@
 
 void diff_test_skip_qemu();
 void diff_test_skip_nemu();
-void raise_intr(uint8_t NO, vaddr_t ret_addr);
 
 make_EHelper(lidt) {
-  // TODO();
-  cpu.idtr.limit = vaddr_read(id_dest->addr, 2);
-  cpu.idtr.base = vaddr_read(id_dest->addr + 2, 4);
+  TODO();
 
   print_asm_template1(lidt);
 }
@@ -29,9 +26,7 @@ make_EHelper(mov_cr2r) {
 }
 
 make_EHelper(int) {
-  // TODO();
-  uint8_t NO=id_dest->val&0xff;
-  raise_intr(NO,decoding.seq_eip);
+  TODO();
 
   print_asm("int %s", id_dest->str);
 
@@ -40,30 +35,8 @@ make_EHelper(int) {
 #endif
 }
 
-make_EHelper(int3) {
-  raise_intr(3, decoding.seq_eip);
-  print_asm("int3");
-#ifdef DIFF_TEST
-  diff_test_skip_nemu();
-#endif
-}
-
 make_EHelper(iret) {
-  // TODO();
-  uint32_t ret_eip, cs, eflags;
-
-  // 弹出 EIP、CS、EFLAGS
-  ret_eip = vaddr_read(cpu.esp, 4);
-  cpu.esp += 4;
-  cs = vaddr_read(cpu.esp, 4);
-  cpu.esp += 4;
-  eflags = vaddr_read(cpu.esp, 4);
-  cpu.esp += 4;
-
-  // 恢复寄存器
-  cpu.eip = ret_eip;
-  cpu.cs = cs;
-  cpu.eflags.val = eflags;
+  TODO();
 
   print_asm("iret");
 }
@@ -94,6 +67,3 @@ make_EHelper(out) {
   diff_test_skip_qemu();
 #endif
 }
-
-
-

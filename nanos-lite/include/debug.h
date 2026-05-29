@@ -1,7 +1,7 @@
 #ifndef __DEBUG_H__
 #define __DEBUG_H__
 
-// #include "common.h"
+#include "common.h"
 
 #define Log(format, ...) \
   printk("\33[1;35m[%s,%d,%s] " format "\33[0m\n", \
