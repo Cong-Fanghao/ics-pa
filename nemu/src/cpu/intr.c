@@ -18,20 +18,18 @@ void raise_intr(uint8_t NO, vaddr_t ret_addr) {
 
   // 从 IDT 中获取中断处理函数地址
   uint32_t idt_base = cpu.idtr.base;
-  uint32_t entry_addr = idt_base + NO * 8;
+  uint32_t entry = idt_base + NO * 8;
 
-  uint32_t low = vaddr_read(entry_addr, 4);
-  uint16_t offset_low = low & 0xFFFF;
-  uint16_t selector = low >> 16;
+  uint32_t low = vaddr_read(entry, 4);
+  uint16_t sel = low >> 16;
+  uint16_t off_low = low & 0xffff;
 
-  uint32_t high = vaddr_read(entry_addr + 4, 4);
-  uint16_t offset_high = high & 0xFFFF;
-
-  uint32_t offset = (offset_high << 16) | offset_low;
+  uint32_t high = vaddr_read(entry + 4, 4);
+  uint16_t off_high = high & 0xffff;
 
   // 更新 CS 和 EIP，跳转到中断处理函数
-  cpu.cs = selector;
-  cpu.eip = offset;
+  cpu.cs = sel;
+  cpu.eip = (off_high << 16) | off_low;
 }
 
 void dev_raise_intr() {
