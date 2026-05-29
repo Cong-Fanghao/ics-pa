@@ -87,6 +87,9 @@ static inline void restart() {
   cpu.esp = 0x8000000;
   cpu.eflags.val = 0x2;
 
+  cpu.idtr.base = 0x10000;
+  cpu.idtr.limit = 0x07ff;
+
 #ifdef DIFF_TEST
   init_qemu_reg();
 #endif
