@@ -7,7 +7,7 @@ make_EHelper(lidt) {
   // TODO();
   uint16_t limit = vaddr_read(id_dest->val, 2);
   uint32_t base = vaddr_read(id_dest->val + 2, 4);
-  
+
   cpu.idtr.limit = limit;
   cpu.idtr.base = base;
 
@@ -45,15 +45,19 @@ make_EHelper(int) {
 make_EHelper(iret) {
   // TODO();
   uint32_t eip, cs, eflags;
-  cpu_pop(&cpu, &eip);
-  cpu_pop(&cpu, &cs);
-  cpu_pop(&cpu, &eflags);
-  
+
+  // 弹出 EIP、CS、EFLAGS
+  eip = vaddr_read(cpu.esp, 4);
+  cpu.esp += 4;
+  cs = vaddr_read(cpu.esp, 4);
+  cpu.esp += 4;
+  eflags = vaddr_read(cpu.esp, 4);
+  cpu.esp += 4;
+
+  // 恢复寄存器
   cpu.eip = eip;
   cpu.cs = cs;
   cpu.eflags.val = eflags;
-  
-  cpu.eflags.IF = 1;
 
   print_asm("iret");
 }

@@ -45,6 +45,7 @@ typedef struct {
   };
 
   vaddr_t eip;
+  rtlreg_t esp;
 
   union
   {
@@ -77,6 +78,8 @@ typedef struct {
     uint32_t base;
     uint16_t limit;
   } idtr;
+
+  uint16_t cs;
 
 } CPU_state;
 
