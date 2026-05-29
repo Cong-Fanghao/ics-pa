@@ -100,11 +100,5 @@ make_EHelper(out) {
 #endif
 }
 
-make_EHelper(cli) {
-  cpu.eflags.IF = 0;
-  print_asm("cli");
-#ifdef DIFF_TEST
-  diff_test_skip_nemu();
-#endif
-}
+
 
