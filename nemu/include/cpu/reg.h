@@ -72,7 +72,7 @@ typedef struct {
     uint32_t val;
   } eflags;
 
-  struct
+  struct IDTR
   {
     uint32_t base;
     uint16_t limit;

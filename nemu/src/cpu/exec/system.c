@@ -30,8 +30,8 @@ make_EHelper(mov_cr2r) {
 
 make_EHelper(int) {
   // TODO();
-  uint8_t intr_no = id_dest->val;
-  raise_intr(intr_no, decoding.seq_eip);
+  uint8_t NO=id_dest->val&0xff;
+  raise_intr(NO,decoding.seq_eip);
 
   print_asm("int %s", id_dest->str);
 
