@@ -5,7 +5,8 @@ void diff_test_skip_nemu();
 void raise_intr(uint8_t NO, vaddr_t ret_addr);
 
 make_EHelper(lidt) {
-  // TODO();
+  assert(id_dest->type == OP_TYPE_MEM);
+
   cpu.idtr.limit = vaddr_read(id_dest->addr, 2);
   cpu.idtr.base = vaddr_read(id_dest->addr + 2, 4);
 
@@ -29,9 +30,7 @@ make_EHelper(mov_cr2r) {
 }
 
 make_EHelper(int) {
-  // TODO();
-  uint8_t intr_no = id_dest->val;
-  raise_intr(intr_no, decoding.seq_eip);
+  raise_intr(id_dest->val, decoding.seq_eip);
 
   print_asm("int %s", id_dest->str);
 
@@ -42,28 +41,29 @@ make_EHelper(int) {
 
 make_EHelper(int3) {
   raise_intr(3, decoding.seq_eip);
+
   print_asm("int3");
+
 #ifdef DIFF_TEST
   diff_test_skip_nemu();
 #endif
 }
 
 make_EHelper(iret) {
-  // TODO();
-  uint32_t ret_eip, cs, eflags;
+  int width = decoding.is_operand_size_16 ? 2 : 4;
 
-  // 弹出 EIP、CS、EFLAGS
-  ret_eip = vaddr_read(cpu.esp, 4);
-  cpu.esp += 4;
-  cs = vaddr_read(cpu.esp, 4);
-  cpu.esp += 4;
-  eflags = vaddr_read(cpu.esp, 4);
-  cpu.esp += 4;
+  rtl_pop(&decoding.jmp_eip, width);
+  rtl_pop(&t0, width);
+  rtl_pop(&t1, width);
 
-  // 恢复寄存器
-  cpu.eip = ret_eip;
-  cpu.cs = cs;
-  cpu.eflags.val = eflags;
+  cpu.cs = t0;
+  if (width == 2) {
+    cpu.eflags = (cpu.eflags & 0xffff0000) | (t1 & 0xffff);
+    decoding.jmp_eip &= 0xffff;
+  } else {
+    cpu.eflags = t1;
+  }
+  decoding.is_jmp = 1;
 
   print_asm("iret");
 }
@@ -73,8 +73,8 @@ void pio_write(ioaddr_t, int, uint32_t);
 
 make_EHelper(in) {
   // TODO();
-  rtl_li(&t0, pio_read(id_src->val, id_dest->width));
-  operand_write(id_dest, &t0);
+  id_dest->val = pio_read(id_src->val, id_dest->width);
+  operand_write(id_dest, &id_dest->val);
 
   print_asm_template2(in);
 
@@ -85,8 +85,7 @@ make_EHelper(in) {
 
 make_EHelper(out) {
   // TODO();
-  rtl_sr(R_EAX, id_dest->width, &tzero);
-  pio_write(id_dest->val, id_src->width, id_src->val);
+  pio_write(id_dest->val, id_dest->width, id_src->val);
 
   print_asm_template2(out);
 
@@ -94,6 +93,3 @@ make_EHelper(out) {
   diff_test_skip_qemu();
 #endif
 }
-
-
-
