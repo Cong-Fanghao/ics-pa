@@ -73,6 +73,8 @@ static int cmd_info(char *args) {
     printf("BP   0x%04x  %u\n", (uint16_t)reg_w(R_BP), (uint16_t)reg_w(R_BP));
     printf("SI   0x%04x  %u\n", (uint16_t)reg_w(R_SI), (uint16_t)reg_w(R_SI));
     printf("DI   0x%04x  %u\n", (uint16_t)reg_w(R_DI), (uint16_t)reg_w(R_DI));
+    printf("CR0  0x%08x  %u\n", (uint32_t)cpu.CR0, (uint32_t)cpu.CR0);
+    printf("CR3  0x%08x  %u\n", (uint32_t)cpu.CR3, (uint32_t)cpu.CR3);
   }
   else if(args[0] == 'w')
   {
