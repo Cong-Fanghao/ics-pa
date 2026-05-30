@@ -5,9 +5,8 @@ static inline uint32_t rot_mask(int width) {
 }
 
 make_EHelper(test) {
-  // TODO();
-  rtl_and(&t2,&id_dest->val,&id_src->val);
-  rtl_update_ZFSF(&t2,id_dest->width);
+  rtl_and(&t2, &id_dest->val, &id_src->val);
+  rtl_update_ZFSF(&t2, id_dest->width);
   rtl_set_CF(&tzero);
   rtl_set_OF(&tzero);
 
@@ -15,10 +14,9 @@ make_EHelper(test) {
 }
 
 make_EHelper(and) {
-  // TODO();
-  rtl_and(&t2,&id_dest->val,&id_src->val);
-  operand_write(id_dest,&t2);
-  rtl_update_ZFSF(&t2,id_dest->width);
+  rtl_and(&t2, &id_dest->val, &id_src->val);
+  operand_write(id_dest, &t2);
+  rtl_update_ZFSF(&t2, id_dest->width);
   rtl_set_CF(&tzero);
   rtl_set_OF(&tzero);
 
@@ -26,10 +24,9 @@ make_EHelper(and) {
 }
 
 make_EHelper(xor) {
-  // TODO();
-  rtl_xor(&t2,&id_dest->val,&id_src->val);
-  operand_write(id_dest,&t2);
-  rtl_update_ZFSF(&t2,id_dest->width);
+  rtl_xor(&t2, &id_dest->val, &id_src->val);
+  operand_write(id_dest, &t2);
+  rtl_update_ZFSF(&t2, id_dest->width);
   rtl_set_CF(&tzero);
   rtl_set_OF(&tzero);
 
@@ -37,12 +34,12 @@ make_EHelper(xor) {
 }
 
 make_EHelper(or) {
-  // TODO();
-  rtl_or(&t2,&id_dest->val,&id_src->val);
-  operand_write(id_dest,&t2);
-  rtl_update_ZFSF(&t2,id_dest->width);
+  rtl_or(&t2, &id_dest->val, &id_src->val);
+  operand_write(id_dest, &t2);
+  rtl_update_ZFSF(&t2, id_dest->width);
   rtl_set_CF(&tzero);
   rtl_set_OF(&tzero);
+
   print_asm_template2(or);
 }
 
@@ -50,7 +47,6 @@ make_EHelper(sar) {
   rtl_sar(&t2, &id_dest->val, &id_src->val);
   operand_write(id_dest, &t2);
   rtl_update_ZFSF(&t2, id_dest->width);
-  // unnecessary to update CF and OF in NEMU
 
   print_asm_template2(sar);
 }
@@ -59,7 +55,6 @@ make_EHelper(shl) {
   rtl_shl(&t2, &id_dest->val, &id_src->val);
   operand_write(id_dest, &t2);
   rtl_update_ZFSF(&t2, id_dest->width);
-  // unnecessary to update CF and OF in NEMU
 
   print_asm_template2(shl);
 }
@@ -68,7 +63,6 @@ make_EHelper(shr) {
   rtl_shr(&t2, &id_dest->val, &id_src->val);
   operand_write(id_dest, &t2);
   rtl_update_ZFSF(&t2, id_dest->width);
-  // unnecessary to update CF and OF in NEMU
 
   print_asm_template2(shr);
 }
