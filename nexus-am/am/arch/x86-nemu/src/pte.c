@@ -66,6 +66,19 @@ void _switch(_Protect *p) {
 }
 
 void _map(_Protect *p, void *va, void *pa) {
+  PDE *pgdir = (PDE *)p->ptr;
+  PDE *pde = &pgdir[PDX(va)];
+  
+  // 如果页目录项无效，申请新页表
+  if ((*pde & PTE_P) == 0) {
+    PTE *pgtab = (PTE *)palloc_f();
+    *pde = (uintptr_t)pgtab | PTE_P;
+  }
+  
+  // 填写页表项
+  PTE *pgtab = (PTE *)PTE_ADDR(*pde);
+  PTE *pte = &pgtab[PTX(va)];
+  *pte = (uintptr_t)pa | PTE_P;
 }
 
 void _unmap(_Protect *p, void *va) {
