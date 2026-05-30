@@ -20,9 +20,7 @@ static inline void set_width(int width) {
   decoding.src.width = decoding.dest.width = decoding.src2.width = width;
 }
 
-/* Instruction Decode and EXecute */
 static inline void idex(vaddr_t *eip, opcode_entry *e) {
-  /* eip is pointing to the byte next to opcode */
   if (e->decode)
     e->decode(eip);
   e->execute(eip);
@@ -44,32 +42,30 @@ make_group(gp1,
     EX(add), EX(or), EX(adc), EX(sbb),
     EX(and), EX(sub), EX(xor), EX(cmp))
 
-  /* 0xc0, 0xc1, 0xd0, 0xd1, 0xd2, 0xd3 */
+/* 0xc0, 0xc1, 0xd0, 0xd1, 0xd2, 0xd3 */
 make_group(gp2,
     EX(rol), EX(ror), EX(rcl), EX(rcr),
     EX(shl), EX(shr), EMPTY, EX(sar))
 
-  /* 0xf6, 0xf7 */
+/* 0xf6, 0xf7 */
 make_group(gp3,
     EX(test), EMPTY, EX(not), EX(neg),
     EX(mul), EX(imul1), EX(div), EX(idiv))
 
-  /* 0xfe */
+/* 0xfe */
 make_group(gp4,
     EX(inc), EX(dec), EMPTY, EMPTY,
     EMPTY, EMPTY, EMPTY, EMPTY)
 
-  /* 0xff */
+/* 0xff */
 make_group(gp5,
     EX(inc), EX(dec), EX(call_rm), EMPTY,
     EX(jmp_rm), EMPTY, EX(push), EMPTY)
 
-  /* 0x0f 0x01*/
+/* 0x0f 0x01*/
 make_group(gp7,
     EMPTY, EMPTY, EMPTY, EX(lidt),
     EMPTY, EMPTY, EMPTY, EMPTY)
-
-/* TODO: Add more instructions!!! */
 
 opcode_entry opcode_table [512] = {
   /* 0x00 */	IDEXW(G2E,add,1),IDEX(G2E,add),IDEXW(E2G,add,1),IDEX(E2G,add),
