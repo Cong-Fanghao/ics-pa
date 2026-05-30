@@ -33,13 +33,13 @@ int fs_open(const char *pathname, int flags, int mode)
   (void)flags;
   (void)mode;
 
-  for(int i = 0; i < NR_FILES; i++)
-  {
-    if(strcmp(pathname, file_table[i].name) == 0)
-    {
-      file_table[i].open_offset = 0;
-      return i;
+  int idx = 0;
+  while (idx < NR_FILES) {
+    if (strcmp(pathname, file_table[idx].name) == 0) {
+      file_table[idx].open_offset = 0;
+      return idx;
     }
+    idx++;
   }
   assert(0);
   return -1;
@@ -54,29 +54,28 @@ size_t fs_filesz(int fd)
 size_t fs_read(int fd, void *buf, size_t len)
 {
   assert(fd >= 0 && fd < NR_FILES);
+  assert(buf != NULL);
 
-  if (fd == FD_STDIN || fd == FD_STDOUT || fd == FD_STDERR) {
-    return 0;
-  }
-
-  if (fd == FD_EVENTS) {
-    return events_read(buf, len);
-  }
-
-  if (fd == FD_DISPINFO) {
-    size_t remain = file_table[fd].size - file_table[fd].open_offset;
-    if (len > remain) {
-      len = remain;
+  switch (fd) {
+    case FD_STDIN:
+    case FD_STDOUT:
+    case FD_STDERR:
+      return 0;
+    case FD_EVENTS:
+      return events_read(buf, len);
+    case FD_DISPINFO: {
+      size_t max_len = file_table[fd].size - file_table[fd].open_offset;
+      len = (len < max_len) ? len : max_len;
+      dispinfo_read(buf, file_table[fd].open_offset, len);
+      file_table[fd].open_offset += len;
+      return len;
     }
-    dispinfo_read(buf, file_table[fd].open_offset, len);
-    file_table[fd].open_offset += len;
-    return len;
+    default:
+      break;
   }
 
-  size_t remain = file_table[fd].size - file_table[fd].open_offset;
-  if (len > remain) {
-    len = remain;
-  }
+  size_t max_len = file_table[fd].size - file_table[fd].open_offset;
+  len = (len < max_len) ? len : max_len;
 
   ramdisk_read(buf, file_table[fd].disk_offset + file_table[fd].open_offset, len);
   file_table[fd].open_offset += len;
@@ -86,32 +85,36 @@ size_t fs_read(int fd, void *buf, size_t len)
 size_t fs_write(int fd, const void *buf, size_t len)
 {
   assert(fd >= 0 && fd < NR_FILES);
+  assert(buf != NULL);
 
-  if (fd == FD_STDOUT || fd == FD_STDERR) {
-    for (size_t i = 0; i < len; i++) {
-      _putc(((char *)buf)[i]);
+  switch (fd) {
+    case FD_STDOUT:
+    case FD_STDERR: {
+      const char *ptr = buf;
+      size_t cnt = 0;
+      while (cnt < len) {
+        _putc(ptr[cnt]);
+        cnt++;
+      }
+      return cnt;
     }
-    return len;
-  }
-
-  if (fd == FD_STDIN || fd == FD_EVENTS || fd == FD_DISPINFO) {
-    return 0;
-  }
-
-  if (fd == FD_FB) {
-    size_t remain = file_table[fd].size - file_table[fd].open_offset;
-    if (len > remain) {
-      len = remain;
+    case FD_STDIN:
+    case FD_EVENTS:
+    case FD_DISPINFO:
+      return 0;
+    case FD_FB: {
+      size_t max_len = file_table[fd].size - file_table[fd].open_offset;
+      len = (len < max_len) ? len : max_len;
+      fb_write(buf, file_table[fd].open_offset, len);
+      file_table[fd].open_offset += len;
+      return len;
     }
-    fb_write(buf, file_table[fd].open_offset, len);
-    file_table[fd].open_offset += len;
-    return len;
+    default:
+      break;
   }
 
-  size_t remain = file_table[fd].size - file_table[fd].open_offset;
-  if (len > remain) {
-    len = remain;
-  }
+  size_t max_len = file_table[fd].size - file_table[fd].open_offset;
+  len = (len < max_len) ? len : max_len;
 
   ramdisk_write(buf, file_table[fd].disk_offset + file_table[fd].open_offset, len);
   file_table[fd].open_offset += len;
@@ -122,22 +125,24 @@ off_t fs_lseek(int fd, off_t offset, int whence)
 {
   assert(fd >= 0 && fd < NR_FILES);
 
-  off_t new_offset = 0;
+  off_t base = 0;
   switch (whence) {
     case SEEK_SET:
-      new_offset = offset;
+      base = 0;
       break;
     case SEEK_CUR:
-      new_offset = file_table[fd].open_offset + offset;
+      base = file_table[fd].open_offset;
       break;
     case SEEK_END:
-      new_offset = file_table[fd].size + offset;
+      base = file_table[fd].size;
       break;
     default:
       assert(0);
   }
 
-  assert(new_offset >= 0 && new_offset <= file_table[fd].size);
+  off_t new_offset = base + offset;
+  assert(new_offset >= 0);
+  assert(new_offset <= file_table[fd].size);
   file_table[fd].open_offset = new_offset;
   return new_offset;
 }
@@ -145,11 +150,10 @@ off_t fs_lseek(int fd, off_t offset, int whence)
 int fs_close(int fd)
 {
   assert(fd >= 0 && fd < NR_FILES);
+  file_table[fd].open_offset = 0;
   return 0;
 }
 
 void init_fs() {
-  // TODO: initialize the size of /dev/fb
   file_table[FD_FB].size = _screen.width * _screen.height * sizeof(uint32_t);
 }
-
