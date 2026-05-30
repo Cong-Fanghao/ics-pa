@@ -6,14 +6,12 @@ void diff_test_skip_nemu();
 extern void raise_intr(uint8_t NO,vaddr_t ret_addr);
 
 make_EHelper(lidt) {
-  // TODO();
-  t1=id_dest->val;
-  rtl_lm(&t0,&t1,2);
-  cpu.idtr.limit=t0;
+// TODO();
+  cpu.idtr.limit = id_dest->val;   // limit 已经被预加载到 val
 
-  t1=id_dest->val+2;
-  rtl_lm(&t0,&t1,4);
-  cpu.idtr.base=t0;
+  t1 = id_dest->addr + 2;         // base 字段的地址
+  rtl_lm(&t0, &t1, 4);
+  cpu.idtr.base = t0;
 
   print_asm_template1(lidt);
 }
