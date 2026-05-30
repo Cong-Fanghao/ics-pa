@@ -72,10 +72,11 @@ make_EHelper(iret) {
 uint32_t pio_read(ioaddr_t, int);
 void pio_write(ioaddr_t, int, uint32_t);
 
-make_EHelper(in) {
+make_EHelper(in)
+{
   // TODO();
-  rtl_li(&t0, pio_read(id_src->val, id_dest->width));
-  operand_write(id_dest, &t0);
+  id_dest->val = pio_read(id_src->val, id_dest->width);
+  operand_write(id_dest, &id_dest->val);
 
   print_asm_template2(in);
 
@@ -84,10 +85,10 @@ make_EHelper(in) {
 #endif
 }
 
-make_EHelper(out) {
+make_EHelper(out)
+{
   // TODO();
-  rtl_sr(R_EAX, id_dest->width, &tzero);
-  pio_write(id_dest->val, id_src->width, id_src->val);
+  pio_write(id_dest->val, id_dest->width, id_src->val);
 
   print_asm_template2(out);
 
