@@ -100,3 +100,91 @@ make_EHelper(lea) {
   operand_write(id_dest, &t2);
   print_asm_template2(lea);
 }
+
+make_EHelper(xchg)
+{
+  rtl_mv(&t0, &id_src->val);
+  rtl_mv(&t1, &id_dest->val);
+  operand_write(id_dest, &t0);
+  operand_write(id_src, &t1);
+  print_asm_template2(xchg);
+}
+
+make_EHelper(movs)
+{
+  vaddr_t src = cpu.esi;
+  vaddr_t dest = cpu.edi;
+
+  if (id_dest->width == 1)
+  {
+    uint8_t data = vaddr_read(src, 1);
+    vaddr_write(dest, 1, data);
+  }
+  else if (id_dest->width == 2)
+  {
+    uint16_t data = vaddr_read(src, 2);
+    vaddr_write(dest, 2, data);
+  }
+  else
+  {
+    uint32_t data = vaddr_read(src, 4);
+    vaddr_write(dest, 4, data);
+  }
+
+  if (cpu.eflags.DF == 0)
+  {
+    cpu.esi += id_dest->width;
+    cpu.edi += id_dest->width;
+  }
+  else
+  {
+    cpu.esi -= id_dest->width;
+    cpu.edi -= id_dest->width;
+  }
+
+  print_asm("movs");
+}
+
+make_EHelper(bsr)
+{
+  uint32_t val = id_src->val;
+  int i;
+  for (i = 31; i >= 0; i--)
+  {
+    if (val & (1 << i))
+    {
+      t0 = i;
+      break;
+    }
+  }
+  operand_write(id_dest, &t0);
+  print_asm_template2(bsr);
+}
+
+make_EHelper(rol)
+{
+  rtl_shl(&t0, &id_src->val, &id_dest->val);
+  operand_write(id_dest, &t0);
+  print_asm_template2(rol);
+}
+
+make_EHelper(ror)
+{
+  rtl_shr(&t0, &id_src->val, &id_dest->val);
+  operand_write(id_dest, &t0);
+  print_asm_template2(ror);
+}
+
+make_EHelper(rcl)
+{
+  rtl_shl(&t0, &id_src->val, &id_dest->val);
+  operand_write(id_dest, &t0);
+  print_asm_template2(rcl);
+}
+
+make_EHelper(rcr)
+{
+  rtl_shr(&t0, &id_src->val, &id_dest->val);
+  operand_write(id_dest, &t0);
+  print_asm_template2(rcr);
+}

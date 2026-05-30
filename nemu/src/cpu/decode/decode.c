@@ -342,11 +342,6 @@ make_DHelper(Ew2G)
   id_dest->width = 2;
 }
 
-make_DHelper(E2G)
-{
-  decode_op_rm(eip, id_src, true, id_dest, false);
-}
-
 void operand_write(Operand *op, rtlreg_t* src) {
   if (op->type == OP_TYPE_REG) { rtl_sr(op->reg, op->width, src); }
   else if (op->type == OP_TYPE_MEM) { rtl_sm(&op->addr, op->width, src); }

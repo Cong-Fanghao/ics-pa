@@ -112,4 +112,9 @@ make_DHelper(in_dx2a);
 make_DHelper(out_a2I);
 make_DHelper(out_a2dx);
 
+make_DHelper(a2r);
+make_DHelper(gp3_E);
+make_DHelper(Eb2G);
+make_DHelper(Ew2G);
+
 #endif
