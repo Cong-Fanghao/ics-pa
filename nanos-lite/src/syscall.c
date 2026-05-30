@@ -33,7 +33,7 @@ _RegSet* do_syscall(_RegSet *r) {
   a[1] = SYSCALL_ARG2(r);
   a[2] = SYSCALL_ARG3(r);
   a[3] = SYSCALL_ARG4(r);
-  Log("do_syscall: a[0]=%d", a[0]);
+  panic("do_syscall is called! a[0]=%d", SYSCALL_ARG1(r));
 
   switch (a[0]) {
     case SYS_none:SYSCALL_ARG1(r)=sys_none();break;
