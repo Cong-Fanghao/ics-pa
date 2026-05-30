@@ -23,14 +23,12 @@ make_EHelper(movs) {
 
 make_EHelper(push) {
   rtl_push(&id_dest->val, decoding.is_operand_size_16 ? 2 : 4);
-
   print_asm_template1(push);
 }
 
 make_EHelper(pop) {
   rtl_pop(&id_dest->val, decoding.is_operand_size_16 ? 2 : 4);
   operand_write(id_dest, &id_dest->val);
-
   print_asm_template1(pop);
 }
 
@@ -156,6 +154,6 @@ make_EHelper(xchg) {
   t0 = id_dest->val;
   id_dest->val = id_src->val;
   id_src->val = t0;
-  operand_write(id_dest,&id_dest->val);
-  operand_write(id_src,&id_src->val);
+  operand_write(id_dest, &id_dest->val);
+  operand_write(id_src, &id_src->val);
 }
