@@ -30,8 +30,6 @@ make_EHelper(pusha) {
   rtl_push(&cpu.esi);
   rtl_push(&cpu.edi);
   print_asm("pusha");
-
-  print_asm("pusha");
 }
 
 make_EHelper(popa) {
@@ -44,8 +42,6 @@ make_EHelper(popa) {
   rtl_pop(&cpu.edx);
   rtl_pop(&cpu.ecx);
   rtl_pop(&cpu.eax);
-  print_asm("popa");
-
   print_asm("popa");
 }
 

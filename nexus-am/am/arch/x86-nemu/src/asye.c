@@ -7,6 +7,7 @@ void vecsys();
 void vecnull();
 
 _RegSet* irq_handle(_RegSet *tf) {
+  Log("irq_handle: tf->irq = %d", tf->irq);
   _RegSet *next = tf;
   if (H) {
     _Event ev;
