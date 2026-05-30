@@ -56,16 +56,15 @@ make_EHelper(int3)
 
 make_EHelper(iret) {
   // TODO();
-  rtl_pop(&cpu.eip);        // 弹出 EIP（返回地址）
-  
-  rtl_pop(&t0);             // 弹出 CS（32位，但只取低16位）
-  cpu.cs = t0;
-  
-  rtl_pop(&t1);             // 弹出 EFLAGS
-  memcpy(&cpu.eflags, &t1, sizeof(cpu.eflags));  // union 类型必须用 memcpy
+  rtl_pop(&cpu.eip);
+  rtl_pop(&cpu.cs);
+  rtl_pop(&t0);
+  memcpy(&cpu.eflags,&t0,sizeof(cpu.eflags));
 
-  decoding.is_jmp = 1;      // 设置跳转标志
-  decoding.jmp_eip = cpu.eip; // 跳转目标为弹出的返回地址
+  decoding.jmp_eip=1;
+  decoding.seq_eip=cpu.eip;
+
+  print_asm("iret");
 
   print_asm("iret");
 }
