@@ -7,6 +7,8 @@ void vecsys();
 void vecnull();
 
 _RegSet* irq_handle(_RegSet *tf) {
+  const char *msg = "irq_handle: ";
+  for (int i = 0; msg[i]; i++) _putc(msg[i]);
   _RegSet *next = tf;
   if (H) {
     _Event ev;
