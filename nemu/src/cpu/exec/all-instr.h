@@ -59,3 +59,18 @@ make_EHelper(in);
 make_EHelper(out);
 
 make_EHelper(lidt);
+make_EHelper(int);
+make_EHelper(int3);
+make_EHelper(iret);
+
+make_EHelper(pusha);
+make_EHelper(popa);
+
+make_EHelper(rol);
+make_EHelper(ror);
+make_EHelper(rcl);
+make_EHelper(rcr);
+
+make_EHelper(xchg);
+make_EHelper(movs);
+make_EHelper(bsr);
