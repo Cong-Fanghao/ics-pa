@@ -34,9 +34,7 @@ make_EHelper(mov_cr2r) {
 
 make_EHelper(int) {
   // TODO();
-  uint8_t NO = id_dest->val & 0xff;
-  rtl_addi(&decoding.seq_eip, &decoding.seq_eip, 2);  // 关键！
-  raise_intr(NO, decoding.seq_eip);
+  raise_intr(id_dest->val, decoding.seq_eip);
 
   print_asm("int %s", id_dest->str);
 
