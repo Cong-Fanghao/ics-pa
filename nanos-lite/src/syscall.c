@@ -11,6 +11,7 @@ void sys_exit(int a){
 
 int sys_write(int fd, void *buf, size_t len)
 {
+  Log("sys_write called: fd=%d, buf=%p, len=%d", fd, buf, len);
   if (fd == 1 || fd == 2)
   {
     char c;
