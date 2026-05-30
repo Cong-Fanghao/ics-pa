@@ -2,13 +2,16 @@
 
 void diff_test_skip_qemu();
 void diff_test_skip_nemu();
-void raise_intr(uint8_t NO, vaddr_t ret_addr);
+
+extern void raise_intr(uint8_t NO,vaddr_t ret_addr);
 
 make_EHelper(lidt) {
-  assert(id_dest->type == OP_TYPE_MEM);
+// TODO();
+  cpu.idtr.limit = id_dest->val;   // limit 已经被预加载到 val
 
-  cpu.idtr.limit = vaddr_read(id_dest->addr, 2);
-  cpu.idtr.base = vaddr_read(id_dest->addr + 2, 4);
+  t1 = id_dest->addr + 2;         // base 字段的地址
+  rtl_lm(&t0, &t1, 4);
+  cpu.idtr.base = t0;
 
   print_asm_template1(lidt);
 }
@@ -30,7 +33,9 @@ make_EHelper(mov_cr2r) {
 }
 
 make_EHelper(int) {
-  raise_intr(id_dest->val, decoding.seq_eip);
+  // TODO();
+  uint8_t NO=id_dest->val&0xff;//低8bit
+  raise_intr(NO,decoding.seq_eip);
 
   print_asm("int %s", id_dest->str);
 
@@ -39,9 +44,9 @@ make_EHelper(int) {
 #endif
 }
 
-make_EHelper(int3) {
+make_EHelper(int3)
+{
   raise_intr(3, decoding.seq_eip);
-
   print_asm("int3");
 
 #ifdef DIFF_TEST
@@ -50,20 +55,16 @@ make_EHelper(int3) {
 }
 
 make_EHelper(iret) {
-  int width = decoding.is_operand_size_16 ? 2 : 4;
+  // TODO();
+  rtl_pop(&cpu.eip);
+  rtl_pop(&cpu.cs);
+  rtl_pop(&t0);
+  memcpy(&cpu.eflags,&t0,sizeof(cpu.eflags));
 
-  rtl_pop(&decoding.jmp_eip, width);
-  rtl_pop(&t0, width);
-  rtl_pop(&t1, width);
+  Log("IRET: eip=0x%x, cs=0x%x", cpu.eip, cpu.cs);
 
-  cpu.cs = t0;
-  if (width == 2) {
-    cpu.eflags = (cpu.eflags & 0xffff0000) | (t1 & 0xffff);
-    decoding.jmp_eip &= 0xffff;
-  } else {
-    cpu.eflags = t1;
-  }
-  decoding.is_jmp = 1;
+  decoding.jmp_eip=1;
+  decoding.seq_eip=cpu.eip;
 
   print_asm("iret");
 }
@@ -71,7 +72,8 @@ make_EHelper(iret) {
 uint32_t pio_read(ioaddr_t, int);
 void pio_write(ioaddr_t, int, uint32_t);
 
-make_EHelper(in) {
+make_EHelper(in)
+{
   // TODO();
   id_dest->val = pio_read(id_src->val, id_dest->width);
   operand_write(id_dest, &id_dest->val);
@@ -83,7 +85,8 @@ make_EHelper(in) {
 #endif
 }
 
-make_EHelper(out) {
+make_EHelper(out)
+{
   // TODO();
   pio_write(id_dest->val, id_dest->width, id_src->val);
 
