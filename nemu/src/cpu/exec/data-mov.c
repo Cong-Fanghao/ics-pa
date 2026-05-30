@@ -157,3 +157,9 @@ make_EHelper(xchg) {
   operand_write(id_dest, &id_dest->val);
   operand_write(id_src, &id_src->val);
 }
+
+make_EHelper(mov_store_cr)
+{
+  rtl_store_cr(id_dest->reg, &id_src->val);
+  print_asm_template2(mov);
+}

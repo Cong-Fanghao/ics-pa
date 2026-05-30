@@ -59,3 +59,5 @@ make_EHelper(nemu_trap);
 
 make_EHelper(in);
 make_EHelper(out);
+
+make_EHelper(mov_store_cr);
