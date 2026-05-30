@@ -253,4 +253,3 @@ void exec_wrapper(bool print_flag) {
   difftest_step(eip);
 #endif
 }
-

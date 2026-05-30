@@ -4,6 +4,7 @@
 #include "nemu.h"
 
 #include <stdlib.h>
+#include <string.h>
 #include <readline/readline.h>
 #include <readline/history.h>
 
@@ -36,207 +37,85 @@ static int cmd_q(char *args) {
   return -1;
 }
 
-static int cmd_expr(char *args)
-{
-  if (args == NULL)
-  {
-    printf("Usage: p <expression>\n");
-    printf("Example: p 1+2 * 3  or  p $eax+4\n");
-    return 0;
-  }
-
-  bool success;
-  uint32_t result = expr(args, &success);
-  if (success)
-  {
-    printf("Result: 0x%08x (%d)\n", result, (int32_t)result);
-  }
-  else
-  {
-    printf("Expression evaluation failed.\n");
-  }
+static int cmd_si(char *args) {
+  int num = 0;
+  if(args == NULL)num = 1; 
+  else num = atoi(args);
+  cpu_exec(num);
   return 0;
 }
 
-static int cmd_si(char *args)
-{
-  int step = 1;
-  if (args != NULL)
+static int cmd_info(char *args) {
+  // CPU_state cpu;
+  if(args[0] == 'r')
   {
-    bool success = false;
-    uint32_t step_val = expr(args, &success);
-
-    if (success)
-    {
-      step = (int)step_val;
-      if (step <= 0)
-      {
-        printf("Step count must be positive (got %d)\n", step);
-        return 0;
-      }
-    }
-    else
-    {
-      printf("Failed to evaluate step expression: %s\n", args);
-      return 0;
-    }
+    printf("EAX  0x%08x  %u\n", (uint32_t)cpu.eax, (uint32_t)cpu.eax);
+    printf("ECX  0x%08x  %u\n", (uint32_t)cpu.ecx, (uint32_t)cpu.ecx);
+    printf("EDX  0x%08x  %u\n", (uint32_t)cpu.edx, (uint32_t)cpu.edx);
+    printf("EBX  0x%08x  %u\n", (uint32_t)cpu.ebx, (uint32_t)cpu.ebx);
+    printf("ESP  0x%08x  %u\n", (uint32_t)cpu.esp, (uint32_t)cpu.esp);
+    printf("EBP  0x%08x  %u\n", (uint32_t)cpu.ebp, (uint32_t)cpu.ebp);
+    printf("ESI  0x%08x  %u\n", (uint32_t)cpu.esi, (uint32_t)cpu.esi);
+    printf("EDI  0x%08x  %u\n", (uint32_t)cpu.edi, (uint32_t)cpu.edi);
+    printf("AL   0x%02x  %u\n", (uint8_t)reg_b(R_AL), (uint8_t)reg_b(R_AL));
+    printf("AH   0x%02x  %u\n", (uint8_t)reg_b(R_AH), (uint8_t)reg_b(R_AH));
+    printf("BL   0x%02x  %u\n", (uint8_t)reg_b(R_BL), (uint8_t)reg_b(R_BL));
+    printf("BH   0x%02x  %u\n", (uint8_t)reg_b(R_BH), (uint8_t)reg_b(R_BH));
+    printf("CL   0x%02x  %u\n", (uint8_t)reg_b(R_CL), (uint8_t)reg_b(R_CL));
+    printf("CH   0x%02x  %u\n", (uint8_t)reg_b(R_CH), (uint8_t)reg_b(R_CH));
+    printf("DL   0x%02x  %u\n", (uint8_t)reg_b(R_DL), (uint8_t)reg_b(R_DL));
+    printf("DH   0x%02x  %u\n", (uint8_t)reg_b(R_DH), (uint8_t)reg_b(R_DH));
+    printf("AX   0x%04x  %u\n", (uint16_t)reg_w(R_AX), (uint16_t)reg_w(R_AX));
+    printf("CX   0x%04x  %u\n", (uint16_t)reg_w(R_CX), (uint16_t)reg_w(R_CX));
+    printf("DX   0x%04x  %u\n", (uint16_t)reg_w(R_DX), (uint16_t)reg_w(R_DX));
+    printf("BX   0x%04x  %u\n", (uint16_t)reg_w(R_BX), (uint16_t)reg_w(R_BX));
+    printf("SP   0x%04x  %u\n", (uint16_t)reg_w(R_SP), (uint16_t)reg_w(R_SP));
+    printf("BP   0x%04x  %u\n", (uint16_t)reg_w(R_BP), (uint16_t)reg_w(R_BP));
+    printf("SI   0x%04x  %u\n", (uint16_t)reg_w(R_SI), (uint16_t)reg_w(R_SI));
+    printf("DI   0x%04x  %u\n", (uint16_t)reg_w(R_DI), (uint16_t)reg_w(R_DI));
   }
-
-  cpu_exec(step);
+  else if(args[0] == 'w')
+  {
+    printWP();
+  }
+  return 0;
+}
+static int cmd_x(char *args) {
+  char *n = strtok(args," ");
+  int num = atoi(n);
+  char* Expr = n + strlen(n) + 1;
+  bool success = true;
+  long base = expr(Expr,&success);
+  printf("0x%lx: ",base);
+  for(int i = base;i < base + num * 4;i += 4)
+  {
+    uint32_t data = vaddr_read(i,4);
+    printf("0x%08x ",(uint32_t)data);
+  }
+  puts("");
   return 0;
 }
 
-void isa_reg_display(void);
+static int cmd_p(char *args)
+{
+  bool scucess = true;
+  printf("the result is %d\n",expr(args,&scucess));
+  return scucess;
+}
 
 static int cmd_w(char *args)
 {
-  if (args == NULL)
-  {
-    printf("Usage: w <expression>\n");
-    printf("Set a watchpoint for an expression.\n");
-    return 0;
-  }
-
-  bool success;
-  uint32_t val = expr(args, &success);
-  if (!success)
-  {
-    printf("Invalid expression: %s\n", args);
-    return 0;
-  }
-
-  WP *wp = new_wp();
-  if (wp == NULL)
-  {
-    printf("Failed to create watchpoint: no free watchpoint available.\n");
-    return 0;
-  }
-
-  strncpy(wp->expr, args, sizeof(wp->expr) - 1);
-  wp->expr[sizeof(wp->expr) - 1] = '\0';
-  wp->old_val = val;
-
-  printf("Watchpoint %d: %s\n", wp->NO, wp->expr);
+  WP* Insert_wp = new_wp();
+  strncpy(Insert_wp->Address, args, WP_EXPR_LEN - 1);
+  Insert_wp->Address[WP_EXPR_LEN - 1] = '\0';
+  bool success = true;
+  Insert_wp->last_value = expr(Insert_wp->Address,&success);
   return 0;
 }
-
 static int cmd_d(char *args)
 {
-  if (args == NULL)
-  {
-    printf("Usage: d <watchpoint_number>\n");
-    printf("Delete a watchpoint.\n");
-    return 0;
-  }
-
-  int no = atoi(args);
-  delete_watchpoint(no);
-  return 0;
-}
-
-static int cmd_info(char *args)
-{
-  if (args == NULL)
-  {
-    printf("Usage: info <subcommand>\n");
-    printf("Subcommands:\n");
-    printf("  r - print register values\n");
-    printf("  w - print watchpoints (to be implemented)\n");
-    return 0;
-  }
-  char *subcmd = strtok(args, " ");
-  if (subcmd == NULL)
-  {
-    printf("Please specify a subcommand: r or w\n");
-    return 0;
-  }
-  if (strcmp(subcmd, "r") == 0)
-  {
-    isa_reg_display();
-  }
-  else if (strcmp(subcmd, "w") == 0)
-  {
-    print_watchpoints();
-  }
-  else
-  {
-    printf("Unknown subcommand '%s'\n", subcmd);
-  }
-  return 0;
-}
-
-static int cmd_x(char *args)
-{
-  if (args == NULL)
-  {
-    printf("Usage: x <count_expression> <address_expression>\n");
-    printf("Both parameters support full expression evaluation.\n");
-    printf("Examples:\n");
-    printf("  x 10 0x100000          # 查看固定地址\n");
-    printf("  x 2 * 4 $eip             # 查看8字节，从eip开始\n");
-    printf("  x $eax $esp+($ebx*2)  # 数量由eax决定，地址动态计算\n");
-    return 0;
-  }
-
-  char *count_expr_end = args;
-  while (*count_expr_end != '\0' && *count_expr_end != ' ')
-  {
-    count_expr_end++;
-  }
-
-  if (*count_expr_end == '\0')
-  {
-    printf("Missing address expression. Usage: x <count> <address>\n");
-    return 0;
-  }
-
-  *count_expr_end = '\0';
-  char *count_expr = args;
-  char *addr_expr = count_expr_end + 1;
-
-  bool success = false;
-  uint32_t count = expr(count_expr, &success);
-  if (!success)
-  {
-    printf("Failed to evaluate count expression: %s\n", count_expr);
-    *count_expr_end = ' ';
-    return 0;
-  }
-
-  if (count <= 0 || count > 1024)
-  {
-    printf("Count must be between 1 and 1024 (got %u)\n", count);
-    *count_expr_end = ' ';
-    return 0;
-  }
-
-  uint32_t addr = expr(addr_expr, &success);
-  if (!success)
-  {
-    printf("Failed to evaluate address expression: %s\n", addr_expr);
-    *count_expr_end = ' ';
-    return 0;
-  }
-
-  printf("Scanning %u bytes from 0x%08x\n", count, addr);
-  printf("  Count expression: %s\n", count_expr);
-  printf("  Addr expression:  %s\n", addr_expr);
-  printf("\n");
-  printf("Address       +0    +1    +2    +3    +4    +5    +6    +7\n");
-  printf("==========   ====  ====  ====  ====  ====  ====  ====  ====\n");
-
-  *count_expr_end = ' ';
-
-  for (uint32_t i = 0; i < count; i += 8)
-  {
-    printf("0x%08x  ", addr + i);
-    for (int j = 0; j < 8 && (i + j) < count; j++)
-    {
-      uint8_t byte = paddr_read(addr + i + j, 1);
-      printf("0x%02x  ", byte);
-    }
-    printf("\n");
-  }
+  int N = strtol(args,NULL,10);
+  delPoint(N);
   return 0;
 }
 
@@ -250,14 +129,15 @@ static struct {
   { "help", "Display informations about all supported commands", cmd_help },
   { "c", "Continue the execution of the program", cmd_c },
   { "q", "Exit NEMU", cmd_q },
+  { "si","Excute Single inst",cmd_si},
+  {"info","Print infomation",cmd_info},
+  {"x","Print Memory location",cmd_x},
+  {"p","excute the result of expr",cmd_p},
+  {"w","When the expr's value change,Stop",cmd_w},
+  {"d","Delte the WP",cmd_d},
 
   /* TODO: Add more commands */
-  { "si", "Setp N(default 1)", cmd_si },
-  { "info", "Print program status", cmd_info },
-  { "x", "Scan memory", cmd_x },
-  { "p", "Evaluate the expression", cmd_expr },
-  { "w", "Set a watchpoint", cmd_w },
-  { "d", "Delete a watchpoint", cmd_d },
+
 };
 
 #define NR_CMD (sizeof(cmd_table) / sizeof(cmd_table[0]))
