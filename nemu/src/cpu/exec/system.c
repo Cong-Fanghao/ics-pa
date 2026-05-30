@@ -61,10 +61,10 @@ make_EHelper(iret) {
   rtl_pop(&t0);
   memcpy(&cpu.eflags,&t0,sizeof(cpu.eflags));
 
+  Log("IRET: eip=0x%x, cs=0x%x", cpu.eip, cpu.cs);
+
   decoding.jmp_eip=1;
   decoding.seq_eip=cpu.eip;
-
-  print_asm("iret");
 
   print_asm("iret");
 }

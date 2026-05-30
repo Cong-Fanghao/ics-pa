@@ -22,6 +22,8 @@ void raise_intr(uint8_t NO, vaddr_t ret_addr) {
   uint32_t off_32_16=vaddr_read(gate_addr+sizeof(GateDesc)-2,2);
   uint32_t target_addr=(off_32_16<<16)+off_15_0;
 
+  Log("INTR: NO=0x%x, target=0x%x, ret=0x%x", NO, target_addr, ret_addr);
+
   decoding.is_jmp=1;
   decoding.jmp_eip=target_addr;
 }
