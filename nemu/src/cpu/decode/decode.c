@@ -316,6 +316,37 @@ make_DHelper(lidt_a){
   decode_op_a(eip,id_dest,true);
 }
 
+make_DHelper(a2r)
+{
+  decode_op_a(eip, id_dest, true);
+  decode_op_r(eip, id_src, true);
+}
+
+make_DHelper(gp3_E)
+{
+  decode_op_rm(eip, id_dest, true, NULL, false);
+}
+
+make_DHelper(Eb2G)
+{
+  decode_op_rm(eip, id_src, true, id_dest, false);
+  id_src->width = 1;
+  id_dest->width = 1;
+}
+
+/* Ew2G: Word r/m to Register */
+make_DHelper(Ew2G)
+{
+  decode_op_rm(eip, id_src, true, id_dest, false);
+  id_src->width = 2;
+  id_dest->width = 2;
+}
+
+make_DHelper(E2G)
+{
+  decode_op_rm(eip, id_src, true, id_dest, false);
+}
+
 void operand_write(Operand *op, rtlreg_t* src) {
   if (op->type == OP_TYPE_REG) { rtl_sr(op->reg, op->width, src); }
   else if (op->type == OP_TYPE_MEM) { rtl_sm(&op->addr, op->width, src); }
