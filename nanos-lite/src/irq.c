@@ -5,7 +5,9 @@ extern _RegSet *schedule(_RegSet *prev);
 
 static _RegSet* do_event(_Event e, _RegSet* r) {
   switch (e.event) {
-    case _EVENT_SYSCALL: return do_syscall(r);
+    case _EVENT_SYSCALL:
+      do_syscall(r);
+      return schedule(r);
     case _EVENT_TRAP: 
       Log("TRAP event received, calling schedule");
       return schedule(r);
