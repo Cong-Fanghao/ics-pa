@@ -34,6 +34,9 @@ _RegSet* schedule(_RegSet *prev) {
   }
   
   current = &pcb[0];
+
+  Log("schedule: switching to proc 0, tf at %p", current->tf);
+
   _switch(&current->as);
   return current->tf; 
 }
