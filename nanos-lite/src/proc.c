@@ -29,15 +29,15 @@ void load_prog(const char *filename) {
 }
 
 static PCB *select_proc(void) {
-  static int counter = 0;
   static PCB *last = NULL;
   
-  PCB *choice = (counter++ % 1000 == 0) ? &pcb[1] : &pcb[0];
+  // 轮流选择：如果当前是 hello，下次选 pal；反之亦然
+  PCB *choice = (current == &pcb[0]) ? &pcb[1] : &pcb[0];
   
   if (choice != last) {
     Log("sched: %s -> %s", 
-        last ? (last == &pcb[0] ? "pal" : "hello") : "none",
-        choice == &pcb[0] ? "pal" : "hello");
+        last ? (last == &pcb[0] ? "hello" : "pal") : "none",
+        choice == &pcb[0] ? "hello" : "pal");
     last = choice;
   }
   
