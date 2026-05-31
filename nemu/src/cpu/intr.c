@@ -16,6 +16,9 @@ void raise_intr(uint8_t NO, vaddr_t ret_addr) {
 
   rtlreg_t cs = cpu.cs;
   rtl_push(&cpu.eflags, 4);
+
+  cpu.Eflags.IF = 0;
+
   rtl_push(&cs, 4);
   rtl_push(&ret_addr, 4);
 
