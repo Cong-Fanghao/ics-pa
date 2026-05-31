@@ -11,6 +11,8 @@ static _RegSet* do_event(_Event e, _RegSet* r) {
     case _EVENT_TRAP: 
       Log("TRAP event received, calling schedule");
       return schedule(r);
+    case _EVENT_IRQ_TIME:
+      return schedule(r);
     default: panic("Unhandled event ID = %d", e.event);
   }
 
