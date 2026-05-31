@@ -27,10 +27,5 @@ void raise_intr(uint8_t NO, vaddr_t ret_addr) {
 }
 
 void dev_raise_intr() {
-  const uint8_t IRQ_TIMER = 32;
   cpu.INTR = true;
-  
-  if (cpu.Eflags.IF) {
-    raise_intr(IRQ_TIMER, cpu.eip);
-  }
 }
