@@ -35,9 +35,6 @@ static PCB *select_proc(void) {
   PCB *choice = (current == &pcb[0]) ? &pcb[1] : &pcb[0];
   
   if (choice != last) {
-    Log("sched: %s -> %s", 
-        last ? (last == &pcb[0] ? "hello" : "pal") : "none",
-        choice == &pcb[0] ? "hello" : "pal");
     last = choice;
   }
   
