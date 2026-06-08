@@ -92,11 +92,11 @@ _RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, char *cons
 
   *(--sp) = 0;
 
-  _RegSet *ctx = (_RegSet *)((uintptr_t)sp - sizeof(_RegSet));
+  _RegSet *tf = (_RegSet *)((uintptr_t)sp - sizeof(_RegSet));
 
-  ctx->eflags = 0x02 | 0x200;
-  ctx->cs = 8;
-  ctx->eip = (uintptr_t)entry;
+  tf->eflags = 0x02 | 0x200;
+  tf->cs = 8;
+  tf->eip = (uintptr_t)entry;
 
-  return ctx;
+  return tf;
 }
