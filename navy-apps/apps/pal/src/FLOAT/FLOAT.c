@@ -22,20 +22,42 @@ FLOAT F_mul_F(FLOAT a, FLOAT b) {
 }
 
 FLOAT F_div_F(FLOAT a, FLOAT b) {
-  // assert(0);
-  // return 0;
   int neg = (a < 0) ^ (b < 0);
   uint32_t ua = (a < 0) ? -a : a;
   uint32_t ub = (b < 0) ? -b : b;
 
-  if (ub == 0) {
-    return neg ? 0x80000000 : 0x7FFFFFFF;
+  // 计算 (ua * 2^16) / ub
+  // 分步避免溢出：ua = ua_hi * 2^16 + ua_lo
+  uint32_t ua_hi = ua >> 16;
+  uint32_t ua_lo = ua & 0xFFFF;
+
+  // 第一步：ua_hi * 2^16 / ub
+  // 注意：ua_hi * 2^16 可能溢出，所以用 (ua_hi / ub) * 2^16 + (ua_hi % ub) * 2^16 / ub
+  uint32_t q1 = ua_hi / ub;
+  uint32_t r1 = ua_hi % ub;
+  
+  // q1 * 2^16 不会溢出（q1 < 2^16）
+  uint32_t result = q1 << 16;
+  
+  // 第二步：(r1 * 2^16 + ua_lo * 2^16) / ub = ((r1 + ua_lo) * 2^16) / ub
+  // 但 r1 + ua_lo 可能 >= 2^16，需要再次拆分
+  uint32_t sum = r1 + ua_lo;  // sum < ub + 2^16
+  
+  uint32_t q2, r2;
+  
+  if (sum >= 0x10000) {
+    // sum = sum_hi * 2^16 + sum_lo
+    uint32_t sum_hi = sum >> 16;
+    uint32_t sum_lo = sum & 0xFFFF;
+    // sum_hi * 2^32 / ub，sum_hi 必须 < ub，否则溢出
+    q2 = (sum_hi << 16) / ub;
+    r2 = (sum_hi << 16) % ub;
+    q2 += ((r2 << 16) + sum_lo) / ub;
+  } else {
+    q2 = (sum << 16) / ub;
   }
-
-  uint32_t q = ua / ub;
-  uint32_t r = ua % ub;
-
-  uint32_t result = (q << 16) + ((r << 16) / ub);
+  
+  result += q2;
 
   if (neg) {
     return -(int32_t)result;
