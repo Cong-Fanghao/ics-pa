@@ -3,13 +3,15 @@
 #include <assert.h>
 
 FLOAT F_mul_F(FLOAT a, FLOAT b) {
-  assert(0);
-  return 0;
+  // assert(0);
+  // return 0;
+  return ((int64_t)a * (int64_t)b) >> 16;
 }
 
 FLOAT F_div_F(FLOAT a, FLOAT b) {
-  assert(0);
-  return 0;
+  // assert(0);
+  // return 0;
+  return ((int64_t)a << 16) / b;
 }
 
 FLOAT f2F(float a) {
@@ -23,13 +25,63 @@ FLOAT f2F(float a) {
    * performing arithmetic operations on it directly?
    */
 
-  assert(0);
-  return 0;
+  // assert(0);
+  // return 0;
+  union
+  {
+    float f;
+    uint32_t u;
+  } uf;
+  uf.f = a;
+
+  uint32_t bits = uf.u;
+  uint32_t sign = bits >> 31;         // 符号位
+  uint32_t exp = (bits >> 23) & 0xFF; // 指数部分（偏移 127）
+  uint32_t frac = bits & 0x7FFFFF;    // 尾数部分（23 位）
+
+  if (exp == 0xFF)
+  {
+    return 0;
+  }
+
+  int32_t E;  // 实际指数
+  uint32_t M; // 实际尾数
+
+  if (exp == 0)
+  {
+    E = 1 - 127;
+    M = frac;
+  }
+  else
+  {
+    E = (int32_t)exp - 127;
+    M = frac | 0x800000;
+  }
+
+  int32_t result = (int32_t)M;
+  int32_t shift = E - 7;
+
+  if (shift >= 0)
+  {
+    result = result << shift;
+  }
+  else
+  {
+    result = result >> (-shift);
+  }
+
+  if (sign)
+  {
+    result = -result;
+  }
+
+  return result;
 }
 
 FLOAT Fabs(FLOAT a) {
-  assert(0);
-  return 0;
+  // assert(0);
+  // return 0;
+  return a < 0 ? -a : a;
 }
 
 /* Functions below are already implemented */

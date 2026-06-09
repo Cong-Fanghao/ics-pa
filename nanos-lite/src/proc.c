@@ -33,7 +33,7 @@ static PCB *select_proc(void) {
   
   // 轮流选择：如果当前是 hello，下次选 pal；反之亦然
   PCB *choice = (current == &pcb[0]) ? &pcb[1] : &pcb[0];
-  
+
   if (choice != last) {
     last = choice;
   }
