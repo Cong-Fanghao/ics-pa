@@ -33,8 +33,11 @@ FLOAT F_div_F(FLOAT a, FLOAT b) {
 
   if (ub == 0)
   {
-    assert(0);
-    return 0;
+    if (a < 0) {
+      return (FLOAT)0x80000000; // 负无穷
+    } else {
+      return (FLOAT)0x7FFFFFFF; // 正无穷
+    }
   }
 
   uint32_t result = 0;
