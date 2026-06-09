@@ -13,12 +13,17 @@ FLOAT F_mul_F(FLOAT a, FLOAT b) {
   uint32_t b_lo = ub & 0xFFFF;
   uint32_t b_hi = ub >> 16;
 
-  uint32_t result = a_hi * b_lo + a_lo * b_hi + ((a_lo * b_lo) >> 16);
+  uint32_t result_lo = a_lo * b_lo;
+  uint32_t result_mid = a_hi * b_lo + a_lo * b_hi + (result_lo >> 16);
 
-  if ((a < 0) ^ (b < 0)) {
-    return -(int32_t)result;
+  int32_t result = (int32_t)result_mid;
+
+  if ((a < 0) ^ (b < 0))
+  {
+    result = -result;
   }
-  return (int32_t)result;
+
+  return result;
 }
 
 FLOAT F_div_F(FLOAT a, FLOAT b) {
@@ -26,43 +31,34 @@ FLOAT F_div_F(FLOAT a, FLOAT b) {
   uint32_t ua = (a < 0) ? -a : a;
   uint32_t ub = (b < 0) ? -b : b;
 
-  // 计算 (ua * 2^16) / ub
-  // 分步避免溢出：ua = ua_hi * 2^16 + ua_lo
-  uint32_t ua_hi = ua >> 16;
-  uint32_t ua_lo = ua & 0xFFFF;
-
-  // 第一步：ua_hi * 2^16 / ub
-  // 注意：ua_hi * 2^16 可能溢出，所以用 (ua_hi / ub) * 2^16 + (ua_hi % ub) * 2^16 / ub
-  uint32_t q1 = ua_hi / ub;
-  uint32_t r1 = ua_hi % ub;
-  
-  // q1 * 2^16 不会溢出（q1 < 2^16）
-  uint32_t result = q1 << 16;
-  
-  // 第二步：(r1 * 2^16 + ua_lo * 2^16) / ub = ((r1 + ua_lo) * 2^16) / ub
-  // 但 r1 + ua_lo 可能 >= 2^16，需要再次拆分
-  uint32_t sum = r1 + ua_lo;  // sum < ub + 2^16
-  
-  uint32_t q2, r2;
-  
-  if (sum >= 0x10000) {
-    // sum = sum_hi * 2^16 + sum_lo
-    uint32_t sum_hi = sum >> 16;
-    uint32_t sum_lo = sum & 0xFFFF;
-    // sum_hi * 2^32 / ub，sum_hi 必须 < ub，否则溢出
-    q2 = (sum_hi << 16) / ub;
-    r2 = (sum_hi << 16) % ub;
-    q2 += ((r2 << 16) + sum_lo) / ub;
-  } else {
-    q2 = (sum << 16) / ub;
+  if (ub == 0)
+  {
+    assert(0);
+    return 0;
   }
-  
-  result += q2;
 
-  if (neg) {
+  uint32_t result = 0;
+  uint32_t remainder = 0;
+
+  for (int i = 0; i < 32; i++) {
+    remainder = (remainder << 1) | ((ua >> 31) & 1);
+    ua <<= 1;
+    
+    if (remainder >= ub) {
+      remainder -= ub;
+      result |= (1 << (31 - i));
+    }
+  }
+
+  if (neg)
+  {
+    if (result == 0x80000000) {
+        return (FLOAT)0x80000000;
+    }
     return -(int32_t)result;
   }
-  return (int32_t)result;
+  
+  return (FLOAT)result;
 }
 
 FLOAT f2F(float a) {
