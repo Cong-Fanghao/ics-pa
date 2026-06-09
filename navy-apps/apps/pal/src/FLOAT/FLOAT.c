@@ -5,13 +5,75 @@
 FLOAT F_mul_F(FLOAT a, FLOAT b) {
   // assert(0);
   // return 0;
-  return ((int64_t)a * (int64_t)b) >> 16;
+  uint32_t ua = (a < 0) ? -a : a;
+  uint32_t ub = (b < 0) ? -b : b;
+
+  uint32_t a_lo = ua & 0xFFFF;
+  uint32_t a_hi = ua >> 16;
+  uint32_t b_lo = ub & 0xFFFF;
+  uint32_t b_hi = ub >> 16;
+
+  // 计算 (a * b) >> 16 的绝对值
+  uint32_t result_lo = a_lo * b_lo;
+  uint32_t result_mid = a_hi * b_lo + a_lo * b_hi + (result_lo >> 16);
+
+  // result_mid 就是 (|a| * |b|) >> 16 的低32位
+
+  int32_t result = (int32_t)result_mid;
+
+  if ((a < 0) ^ (b < 0))
+  {
+    result = -result;
+  }
+
+  return result;
 }
 
 FLOAT F_div_F(FLOAT a, FLOAT b) {
   // assert(0);
   // return 0;
-  return ((int64_t)a << 16) / b;
+  int neg = (a < 0) ^ (b < 0);
+  uint32_t ua = (a < 0) ? -a : a;
+  uint32_t ub = (b < 0) ? -b : b;
+
+  if (ub == 0)
+  {
+    assert(0); // 除零错误
+    return 0;
+  }
+
+  uint32_t ua_hi = ua >> 16;
+  uint32_t ua_lo = ua & 0xFFFF;
+
+  uint32_t q1 = (ua_hi << 16) / ub;
+  uint32_t r1 = (ua_hi << 16) % ub;
+
+  // (r1 << 16 + ua_lo << 16) = ((r1 + ua_lo) << 16)
+  // 如果 r1 + ua_lo >= 2^16，分两次除
+
+  uint32_t sum = r1 + ua_lo;
+  uint32_t q2, r2;
+
+  if (sum >= 0x10000)
+  {
+    uint32_t sum_hi = sum >> 16;
+    uint32_t sum_lo = sum & 0xFFFF;
+    q2 = (sum_hi << 16) / ub;
+    r2 = (sum_hi << 16) % ub;
+    q2 += ((r2 << 16) + sum_lo) / ub;
+  }
+  else
+  {
+    q2 = (sum << 16) / ub;
+  }
+
+  uint32_t result = q1 + q2;
+
+  if (neg)
+  {
+    return -(int32_t)result;
+  }
+  return (int32_t)result;
 }
 
 FLOAT f2F(float a) {
