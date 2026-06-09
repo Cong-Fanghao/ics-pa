@@ -13,20 +13,12 @@ FLOAT F_mul_F(FLOAT a, FLOAT b) {
   uint32_t b_lo = ub & 0xFFFF;
   uint32_t b_hi = ub >> 16;
 
-  // 计算 (a * b) >> 16 的绝对值
-  uint32_t result_lo = a_lo * b_lo;
-  uint32_t result_mid = a_hi * b_lo + a_lo * b_hi + (result_lo >> 16);
+  uint32_t result = a_hi * b_lo + a_lo * b_hi + ((a_lo * b_lo) >> 16);
 
-  // result_mid 就是 (|a| * |b|) >> 16 的低32位
-
-  int32_t result = (int32_t)result_mid;
-
-  if ((a < 0) ^ (b < 0))
-  {
-    result = -result;
+  if ((a < 0) ^ (b < 0)) {
+    return -(int32_t)result;
   }
-
-  return result;
+  return (int32_t)result;
 }
 
 FLOAT F_div_F(FLOAT a, FLOAT b) {
@@ -36,39 +28,10 @@ FLOAT F_div_F(FLOAT a, FLOAT b) {
   uint32_t ua = (a < 0) ? -a : a;
   uint32_t ub = (b < 0) ? -b : b;
 
-  if (ub == 0) {
-    return neg ? 0x80000000 : 0x7FFFFFFF;
-  }
+  uint32_t q = ua / ub;
+  uint32_t r = ua % ub;
 
-  // 拆分 ua = ua_hi * 2^16 + ua_lo
-  uint32_t ua_hi = ua >> 16;
-  uint32_t ua_lo = ua & 0xFFFF;
-
-  // 注意：ua_hi << 16 可能溢出32位！
-  // 所以用 (ua_hi / ub) * 2^16 + (ua_hi % ub) * 2^16 / ub
-  uint32_t q_hi = ua_hi / ub;
-  uint32_t r_hi = ua_hi % ub;
-  
-  uint32_t result = q_hi << 16;
-  
-  uint32_t sum = r_hi + ua_lo;
-  // 需要处理 sum >= 65536 的情况
-  uint32_t q_lo;
-  
-  if (sum >= 0x10000) {
-    uint32_t sum_hi = sum >> 16;
-    uint32_t sum_lo = sum & 0xFFFF;
-    if (sum_hi >= ub) {
-      return neg ? 0x80000000 : 0x7FFFFFFF;
-    }
-    q_lo = (sum_hi << 16) / ub;
-    uint32_t r_lo = (sum_hi << 16) % ub;
-    q_lo += ((r_lo << 16) + sum_lo) / ub;
-  } else {
-    q_lo = (sum << 16) / ub;
-  }
-  
-  result += q_lo;
+  uint32_t result = (q << 16) + ((r << 16) / ub);
 
   if (neg) {
     return -(int32_t)result;
