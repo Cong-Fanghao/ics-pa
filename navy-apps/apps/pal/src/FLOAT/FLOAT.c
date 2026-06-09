@@ -36,41 +36,41 @@ FLOAT F_div_F(FLOAT a, FLOAT b) {
   uint32_t ua = (a < 0) ? -a : a;
   uint32_t ub = (b < 0) ? -b : b;
 
-  if (ub == 0)
-  {
-    assert(0); // 除零错误
-    return 0;
+  if (ub == 0) {
+    return neg ? 0x80000000 : 0x7FFFFFFF;
   }
 
+  // 拆分 ua = ua_hi * 2^16 + ua_lo
   uint32_t ua_hi = ua >> 16;
   uint32_t ua_lo = ua & 0xFFFF;
 
-  uint32_t q1 = (ua_hi << 16) / ub;
-  uint32_t r1 = (ua_hi << 16) % ub;
-
-  // (r1 << 16 + ua_lo << 16) = ((r1 + ua_lo) << 16)
-  // 如果 r1 + ua_lo >= 2^16，分两次除
-
-  uint32_t sum = r1 + ua_lo;
-  uint32_t q2, r2;
-
-  if (sum >= 0x10000)
-  {
+  // 注意：ua_hi << 16 可能溢出32位！
+  // 所以用 (ua_hi / ub) * 2^16 + (ua_hi % ub) * 2^16 / ub
+  uint32_t q_hi = ua_hi / ub;
+  uint32_t r_hi = ua_hi % ub;
+  
+  uint32_t result = q_hi << 16;
+  
+  uint32_t sum = r_hi + ua_lo;
+  // 需要处理 sum >= 65536 的情况
+  uint32_t q_lo;
+  
+  if (sum >= 0x10000) {
     uint32_t sum_hi = sum >> 16;
     uint32_t sum_lo = sum & 0xFFFF;
-    q2 = (sum_hi << 16) / ub;
-    r2 = (sum_hi << 16) % ub;
-    q2 += ((r2 << 16) + sum_lo) / ub;
+    if (sum_hi >= ub) {
+      return neg ? 0x80000000 : 0x7FFFFFFF;
+    }
+    q_lo = (sum_hi << 16) / ub;
+    uint32_t r_lo = (sum_hi << 16) % ub;
+    q_lo += ((r_lo << 16) + sum_lo) / ub;
+  } else {
+    q_lo = (sum << 16) / ub;
   }
-  else
-  {
-    q2 = (sum << 16) / ub;
-  }
+  
+  result += q_lo;
 
-  uint32_t result = q1 + q2;
-
-  if (neg)
-  {
+  if (neg) {
     return -(int32_t)result;
   }
   return (int32_t)result;
