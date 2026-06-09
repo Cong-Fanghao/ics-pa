@@ -28,6 +28,10 @@ FLOAT F_div_F(FLOAT a, FLOAT b) {
   uint32_t ua = (a < 0) ? -a : a;
   uint32_t ub = (b < 0) ? -b : b;
 
+  if (ub == 0) {
+    return neg ? 0x80000000 : 0x7FFFFFFF;
+  }
+
   uint32_t q = ua / ub;
   uint32_t r = ua % ub;
 
