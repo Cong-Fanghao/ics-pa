@@ -2,60 +2,57 @@
 #include <stdint.h>
 #include <assert.h>
 
+union float_ {
+  struct {
+    uint32_t m : 23;      // 尾数
+    uint32_t e : 8;       // 指数
+    uint32_t signal : 1;    // 符号位
+  };
+  uint32_t value;
+};
+
 FLOAT F_mul_F(FLOAT a, FLOAT b) {
   // assert(0);
   // return 0;
-  uint32_t ua = (a < 0) ? -a : a;
-  uint32_t ub = (b < 0) ? -b : b;
+  int sign = (a ^ b) >> 31;
 
-  uint32_t a_lo = ua & 0xFFFF;
-  uint32_t a_hi = ua >> 16;
-  uint32_t b_lo = ub & 0xFFFF;
-  uint32_t b_hi = ub >> 16;
+  a = a & 0x7FFFFFFF;
+  b = b & 0x7FFFFFFF;
 
-  uint32_t result_lo = a_lo * b_lo;
-  uint32_t result_mid = a_hi * b_lo + a_lo * b_hi + (result_lo >> 16);
+  int product_hi = (a >> 16) * (b >> 16);
+  int product_lo = (a & 0xFFFF) * (b & 0xFFFF);
 
-  int32_t result = (int32_t)result_mid;
+  int carry = product_lo >> 16;
+  product_hi += carry;
 
-  if ((a < 0) ^ (b < 0)) {
-    result = -result;
-  }
+  int rounding = 0x8000;
+  int result = (product_hi << 16) + ((product_lo + rounding) >> 16);
+
+  result = (result ^ sign) - sign;
 
   return result;
 }
 
 FLOAT F_div_F(FLOAT a, FLOAT b) {
-  int neg = (a < 0) ^ (b < 0);
-  uint32_t ua = (a < 0) ? -a : a;
-  uint32_t ub = (b < 0) ? -b : b;
+  FLOAT result = Fabs(a) / Fabs(b);
+  FLOAT m = Fabs(a);
+  FLOAT n = Fabs(b);
+  m = m % n;
 
-  if (ub == 0) {
-    return neg ? (FLOAT)0x80000000 : (FLOAT)0x7FFFFFFF;
+  for (int i = 0; i < 16; i++) {
+    m <<= 1;
+    result <<= 1;
+    if (m >= n) {
+      m -= n;
+      result++;
+    }
   }
 
-  uint32_t ua_hi = ua >> 16;
-  uint32_t ua_lo = ua & 0xFFFF;
-
-  uint32_t q1 = (ua_hi << 16) / ub;
-  uint32_t r1 = (ua_hi << 16) % ub;
-
-  uint32_t sum = r1 + ua_lo;
-  uint32_t q2 = 0;
-
-  if (sum >= 0x10000) {
-    uint32_t sum_hi = sum >> 16;
-    uint32_t sum_lo = sum & 0xFFFF;
-    q2 = (sum_hi << 16) / ub;
-    uint32_t r2 = (sum_hi << 16) % ub;
-    q2 += ((r2 << 16) + sum_lo) / ub;
-  } else {
-    q2 = (sum << 16) / ub;
+  if (((a ^ b) & 0x80000000) == 0x80000000) {
+    result = -result;
   }
 
-  uint32_t result = q1 + q2;
-
-  return neg ? -(int32_t)result : (int32_t)result;
+  return result;
 }
 
 FLOAT f2F(float a) {
@@ -71,57 +68,23 @@ FLOAT f2F(float a) {
 
   // assert(0);
   // return 0;
-  union
-  {
-    float f;
-    uint32_t u;
-  } uf;
-  uf.f = a;
+  union float_ f;
+  f.value = *((uint32_t *)(void *)&a);
 
-  uint32_t bits = uf.u;
-  uint32_t sign = bits >> 31;
-  uint32_t exp  = (bits >> 23) & 0xFF;
-  uint32_t frac = bits & 0x7FFFFF;
+  int e = f.e - 127;
 
-  if (exp == 0xFF)
-  {
-    return 0;
-  }
-
-  int32_t E;  // 实际指数
-  uint32_t M; // 实际尾数
-
-  if (exp == 0) {
-    E = 1 - 127;
-    M = frac;
+  FLOAT result;
+  if (e <= 7) {
+    result = (f.m | (1 << 23)) >> (7 - e);
   } else {
-    E = (int32_t)exp - 127;
-    M = frac | 0x800000;
+    result = (f.m | (1 << 23)) << (e - 7);
   }
 
-  int32_t result = (int32_t)M;
-  int32_t shift = E - 7;
-
-  if (shift >= 0) {
-    if (shift >= 24) {
-      result = 0x7FFFFFFF;
-    } else {
-      result = result << shift;
-    }
+  if (f.signal == 0) {
+    return result;
   } else {
-    if (-shift >= 32) {
-      result = 0;
-    } else {
-      result = result >> (-shift);
-    }
+    return -result;
   }
-
-  if (sign)
-  {
-    result = -result;
-  }
-
-  return result;
 }
 
 FLOAT Fabs(FLOAT a) {
