@@ -18,8 +18,7 @@ FLOAT F_mul_F(FLOAT a, FLOAT b) {
 
   int32_t result = (int32_t)result_mid;
 
-  if ((a < 0) ^ (b < 0))
-  {
+  if ((a < 0) ^ (b < 0)) {
     result = -result;
   }
 
@@ -31,37 +30,32 @@ FLOAT F_div_F(FLOAT a, FLOAT b) {
   uint32_t ua = (a < 0) ? -a : a;
   uint32_t ub = (b < 0) ? -b : b;
 
-  if (ub == 0)
-  {
-    if (a < 0) {
-      return (FLOAT)0x80000000; // 负无穷
-    } else {
-      return (FLOAT)0x7FFFFFFF; // 正无穷
-    }
+  if (ub == 0) {
+    return neg ? (FLOAT)0x80000000 : (FLOAT)0x7FFFFFFF;
   }
 
-  uint32_t result = 0;
-  uint32_t remainder = 0;
+  uint32_t ua_hi = ua >> 16;
+  uint32_t ua_lo = ua & 0xFFFF;
 
-  for (int i = 0; i < 32; i++) {
-    remainder = (remainder << 1) | ((ua >> 31) & 1);
-    ua <<= 1;
-    
-    if (remainder >= ub) {
-      remainder -= ub;
-      result |= (1 << (31 - i));
-    }
+  uint32_t q1 = (ua_hi << 16) / ub;
+  uint32_t r1 = (ua_hi << 16) % ub;
+
+  uint32_t sum = r1 + ua_lo;
+  uint32_t q2 = 0;
+
+  if (sum >= 0x10000) {
+    uint32_t sum_hi = sum >> 16;
+    uint32_t sum_lo = sum & 0xFFFF;
+    q2 = (sum_hi << 16) / ub;
+    uint32_t r2 = (sum_hi << 16) % ub;
+    q2 += ((r2 << 16) + sum_lo) / ub;
+  } else {
+    q2 = (sum << 16) / ub;
   }
 
-  if (neg)
-  {
-    if (result == 0x80000000) {
-        return (FLOAT)0x80000000;
-    }
-    return -(int32_t)result;
-  }
-  
-  return (FLOAT)result;
+  uint32_t result = q1 + q2;
+
+  return neg ? -(int32_t)result : (int32_t)result;
 }
 
 FLOAT f2F(float a) {
@@ -85,9 +79,9 @@ FLOAT f2F(float a) {
   uf.f = a;
 
   uint32_t bits = uf.u;
-  uint32_t sign = bits >> 31;         // 符号位
-  uint32_t exp = (bits >> 23) & 0xFF; // 指数部分（偏移 127）
-  uint32_t frac = bits & 0x7FFFFF;    // 尾数部分（23 位）
+  uint32_t sign = bits >> 31;
+  uint32_t exp  = (bits >> 23) & 0xFF;
+  uint32_t frac = bits & 0x7FFFFF;
 
   if (exp == 0xFF)
   {
@@ -97,13 +91,10 @@ FLOAT f2F(float a) {
   int32_t E;  // 实际指数
   uint32_t M; // 实际尾数
 
-  if (exp == 0)
-  {
+  if (exp == 0) {
     E = 1 - 127;
     M = frac;
-  }
-  else
-  {
+  } else {
     E = (int32_t)exp - 127;
     M = frac | 0x800000;
   }
@@ -111,13 +102,18 @@ FLOAT f2F(float a) {
   int32_t result = (int32_t)M;
   int32_t shift = E - 7;
 
-  if (shift >= 0)
-  {
-    result = result << shift;
-  }
-  else
-  {
-    result = result >> (-shift);
+  if (shift >= 0) {
+    if (shift >= 24) {
+      result = 0x7FFFFFFF;
+    } else {
+      result = result << shift;
+    }
+  } else {
+    if (-shift >= 32) {
+      result = 0;
+    } else {
+      result = result >> (-shift);
+    }
   }
 
   if (sign)
