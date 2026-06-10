@@ -14,45 +14,65 @@ union float_ {
 FLOAT F_mul_F(FLOAT a, FLOAT b) {
   // assert(0);
   // return 0;
-  int sign = (a ^ b) >> 31;
+  int neg = (a < 0) ^ (b < 0);
 
-  a = a & 0x7FFFFFFF;
-  b = b & 0x7FFFFFFF;
+  uint32_t ua = (a < 0) ? -a : a;
+  uint32_t ub = (b < 0) ? -b : b;
 
-  int product_hi = (a >> 16) * (b >> 16);
-  int product_lo = (a & 0xFFFF) * (b & 0xFFFF);
+  // 拆分成高16位和低16位
+  uint32_t a_hi = ua >> 16;
+  uint32_t a_lo = ua & 0xFFFF;
+  uint32_t b_hi = ub >> 16;
+  uint32_t b_lo = ub & 0xFFFF;
 
-  int carry = product_lo >> 16;
-  product_hi += carry;
+  uint32_t term1 = a_hi * b_hi;
+  uint32_t term2 = a_hi * b_lo + a_lo * b_hi;
+  uint32_t term3 = a_lo * b_lo;
 
-  int rounding = 0x8000;
-  int result = (product_hi << 16) + ((product_lo + rounding) >> 16);
+  uint32_t carry = term3 >> 16;
+  term2 += carry;
+  
+  uint32_t carry2 = term2 >> 16;
+  term1 += carry2;
+  
+  term2 = term2 & 0xFFFF;
 
-  result = (result ^ sign) - sign;
+  uint32_t result = (term1 << 16) + term2 + (term3 >> 16);
 
-  return result;
+  if (neg) {
+    return -(int32_t)result;
+  }
+  return (int32_t)result;
 }
 
 FLOAT F_div_F(FLOAT a, FLOAT b) {
-  FLOAT result = Fabs(a) / Fabs(b);
-  FLOAT m = Fabs(a);
-  FLOAT n = Fabs(b);
-  m = m % n;
+  // assert(0);
+  // return 0;
+  int neg = (a < 0) ^ (b < 0);
+  
+  uint32_t ua = (a < 0) ? -a : a;
+  uint32_t ub = (b < 0) ? -b : b;
+
+  if (ub == 0) {
+    return neg ? (FLOAT)0x80000000 : (FLOAT)0x7FFFFFFF;
+  }
+
+  uint32_t result = ua / ub;
+  uint32_t m = ua % ub;
 
   for (int i = 0; i < 16; i++) {
     m <<= 1;
     result <<= 1;
-    if (m >= n) {
-      m -= n;
+    if (m >= ub) {
+      m -= ub;
       result++;
     }
   }
 
-  if (((a ^ b) & 0x80000000) == 0x80000000) {
-    result = -result;
+  if (neg) {
+    return -(int32_t)result;
   }
-
-  return result;
+  return (int32_t)result;
 }
 
 FLOAT f2F(float a) {
